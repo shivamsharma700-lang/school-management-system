@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  seed:
+    enabled: false
+    volume: false
+  cors:
+    origins: ${CORS_ORIGINS}
+
+logging:
+  level:
+    root: WARN
+    com.schoolgroup.sms: INFO

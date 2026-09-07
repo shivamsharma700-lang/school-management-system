@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: school-management-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: ${FILE_MAX_SIZE_MB:10}MB
+      max-request-size: ${FILE_MAX_SIZE_MB:10}MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        default_batch_fetch_size: 32
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+app:
+  cors:
+    origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
+  jwt:
+    secret: ${JWT_SECRET}
+    access-minutes: ${JWT_ACCESS_MINUTES:20}
+    refresh-days: ${JWT_REFRESH_DAYS:7}
+  files:
+    storage-dir: ${FILE_STORAGE_DIR:./data/uploads}
+    max-size-mb: ${FILE_MAX_SIZE_MB:10}
+  payment:
+    secret: ${PAYMENT_SECRET:dev-only-change-me}
+    provider: ${PAYMENT_PROVIDER:mock}
+
+logging:
+  level:
+    root: INFO
+    com.schoolgroup.sms: INFO

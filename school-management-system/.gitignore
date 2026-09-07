@@ -1,0 +1,40 @@
+# Secrets and local env — never commit real credentials
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/.env.*.local
+
+# Java / Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.iml
+.idea/
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+npm-debug.log*
+
+# Uploads / runtime
+backend/data/
+backend/uploads/
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.cursor/
+*.swp

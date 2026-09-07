@@ -1,0 +1,10 @@
+package com.schoolgroup.sms.repository;
+
+import com.schoolgroup.sms.entity.FeeComponent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import java.util.UUID;
+
+public interface FeeComponentRepository extends JpaRepository<FeeComponent, UUID>, JpaSpecificationExecutor<FeeComponent> {
+}

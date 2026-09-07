@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:5432/school_management}
+    username: ${DATABASE_USERNAME:sms_app}
+    password: ${DATABASE_PASSWORD:sms_dev_local_only}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-jwt-secret-change-before-any-real-use-64chars-minimum-xxxxx}
+  seed:
+    enabled: true
+    volume: true
+  cors:
+    origins: http://localhost:5173,http://localhost:5174
+
+logging:
+  level:
+    com.schoolgroup.sms: DEBUG

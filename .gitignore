@@ -1,0 +1,62 @@
+# Secrets and local environment (never commit)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Explicit frontend env files with local overrides
+school-management-system/frontend/.env
+school-management-system/frontend/.env.local
+school-management-system/frontend/.env.development
+school-management-system/frontend/.env.production
+school-management-system/frontend/.env.*.local
+
+# Backend secrets / local env
+school-management-system/backend/.env
+school-management-system/.env
+
+# Java / Maven build output
+school-management-system/backend/target/
+**/target/
+*.class
+*.jar
+*.war
+*.iml
+
+# Node / frontend build
+school-management-system/frontend/node_modules/
+school-management-system/frontend/dist/
+school-management-system/frontend/coverage/
+npm-debug.log*
+yarn-error.log*
+
+# Runtime uploads / local databases
+school-management-system/backend/data/
+school-management-system/backend/uploads/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Temporary / local tooling
+*.tmp
+*.bak
+.cache/
