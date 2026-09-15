@@ -34,3 +34,5 @@ Do **not** enable volume seeding in `test` or `prod` profiles.
 ## Frontend fallback
 
 `frontend/src/demo/` is a last-resort UI fallback when an API is empty or down. Live PostgreSQL data always wins.
+
+Git workflow verified successfully.
