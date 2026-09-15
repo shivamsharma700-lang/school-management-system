@@ -332,7 +332,10 @@ export function HomeworkPage() {
                   <div>
                     <p className="font-semibold">{str(r.title)}</p>
                     <p className="mt-1 text-sm text-slate-500">{str(r.subject) !== "—" ? `${str(r.subject)} · ` : ""}{str(r.description)}</p>
-                {str(r.teacher) !== "—" ? <p className="mt-1 text-xs text-slate-400">{str(r.teacher)}</p> : null}
+                {str(r.teacher) !== "—" ? <p className="mt-1 text-xs text-slate-400">{str(r.teacher)}{str(r.className) !== "—" ? ` · ${str(r.className)}${str(r.sectionName) !== "—" ? `-${str(r.sectionName)}` : ""}` : ""}</p> : null}
+                {str(r.attachmentFileId) !== "—" && str(r.attachmentFileId) ? (
+                  <a className="mt-2 inline-block text-sm font-semibold text-forest-700" href={`/api/files/${str(r.attachmentFileId)}`} target="_blank" rel="noreferrer">Download attachment</a>
+                ) : null}
                   </div>
                   <Badge tone={overdue ? "bad" : "info"}>Due {formatDate(due === "—" ? undefined : due)}</Badge>
                 </div>
@@ -360,34 +363,64 @@ function HomeworkForm({ open, onClose }: { open: boolean; onClose: () => void })
     enabled: Boolean(classId),
     queryFn: () => api<Section[]>(`/api/classes/${classId}/sections`),
   });
-  const [form, setForm] = useState({ title: "", description: "", dueDate: todayIso(), classId: "", sectionId: "", subjectId: "", academicYearId: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    dueDate: todayIso(),
+    classId: "",
+    sectionId: "",
+    subjectId: "",
+    academicYearId: "",
+    attachmentFileId: "",
+  });
+  const [uploading, setUploading] = useState(false);
   const save = useMutation({
-    mutationFn: () => post("/api/homework", { ...form, academicYearId: form.academicYearId || years.data?.[0]?.id }),
+    mutationFn: () =>
+      post("/api/homework", {
+        ...form,
+        academicYearId: form.academicYearId || years.data?.[0]?.id,
+        attachmentFileId: form.attachmentFileId || undefined,
+      }),
     onSuccess: () => {
-      toast.success("Assignment published successfully");
+      toast.success("Homework published");
       qc.invalidateQueries({ queryKey: ["homework"] });
       onClose();
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  async function onFile(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const stored = await api<{ id: string }>("/api/files", { method: "POST", body });
+      setForm((f) => ({ ...f, attachmentFileId: stored.id }));
+      toast.success("Attachment uploaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
   return (
-    <Modal open={open} title="New assignment" onClose={onClose} wide>
+    <Modal open={open} title="New homework / assignment" onClose={onClose} wide>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title" required><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field>
         <Field label="Due date" required><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></Field>
-        <Field label="Class">
+        <Field label="Class" required>
           <Select value={form.classId} onChange={(e) => { setForm({ ...form, classId: e.target.value, sectionId: "" }); setClassId(e.target.value); }}>
             <option value="">Select</option>
             {(classes.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </Field>
-        <Field label="Section">
+        <Field label="Section" required>
           <Select value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}>
             <option value="">Select</option>
             {(sections.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </Select>
         </Field>
-        <Field label="Subject">
+        <Field label="Subject" required>
           <Select value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })}>
             <option value="">Select</option>
             {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -399,11 +432,21 @@ function HomeworkForm({ open, onClose }: { open: boolean; onClose: () => void })
             {(years.data ?? []).map((y) => <option key={y.id} value={y.id}>{y.name}</option>)}
           </Select>
         </Field>
+        <Field label="Attachment">
+          <Input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={(e) => void onFile(e.target.files?.[0] ?? null)} />
+          {form.attachmentFileId ? <p className="mt-1 text-xs text-forest-700">Attached · {form.attachmentFileId.slice(0, 8)}…</p> : null}
+          {uploading ? <p className="mt-1 text-xs text-slate-400">Uploading…</p> : null}
+        </Field>
       </div>
       <Field label="Description" required><Textarea className="mt-3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => save.mutate()}>Publish</Button>
+        <Button
+          disabled={!form.title || !form.description || !form.classId || !form.sectionId || !form.subjectId || save.isPending || uploading}
+          onClick={() => save.mutate()}
+        >
+          Publish
+        </Button>
       </div>
     </Modal>
   );
@@ -441,13 +484,21 @@ export function ExamsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const publish = useMutation({
+    mutationFn: (id: string) => post(`/api/exams/${id}/publish`),
+    onSuccess: () => {
+      toast.success("Results published for parents and students");
+      void qc.invalidateQueries({ queryKey: ["exams"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <div>
       <PageHeader
         crumbs={["Academics"]}
         title="Exams & results"
-        subtitle="Schedules, subject papers and report cards. Marks cannot exceed the maximum set on each paper."
+        subtitle="Schedules, subject papers and report cards. Parents/students only see PUBLISHED exams."
         action={canTeach(user?.role) ? <Button onClick={() => setOpen(true)}>Create exam</Button> : null}
       />
       {exams.isDemo ? <div className="mb-3"><DemoChip show /></div> : null}
@@ -465,6 +516,11 @@ export function ExamsPage() {
                 <p className="mt-2 text-sm text-slate-500">{e.examType} · {formatDate(e.startDate)} – {formatDate(e.endDate)}</p>
                 <p className="text-xs text-slate-400">{e.academicYear}</p>
               </button>
+              {isAdminLike(user?.role) && e.status !== "PUBLISHED" && !String(e.id).startsWith("demo-") ? (
+                <Button className="mt-3" size="sm" variant="secondary" disabled={publish.isPending} onClick={() => publish.mutate(e.id)}>
+                  Publish results
+                </Button>
+              ) : null}
             </Card>
           ))}
         </div>
@@ -499,7 +555,7 @@ export function ExamsPage() {
               <div className="mt-4 rounded-2xl border border-line bg-canvas p-5">
                 <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{SCHOOL_NAME}</p>
                 <p className="mt-2 font-display text-2xl">{report.data.student}</p>
-                <p className="mt-4 font-display text-4xl">{report.data.percentage}%</p>
+                <p className="mt-4 font-display text-[clamp(1.5rem,3vw,2.25rem)]">{report.data.percentage}%</p>
                 <p className="text-sm text-slate-500">Grade {report.data.grade} · {report.data.total} / {report.data.max} · {report.data.subjects} subjects</p>
               </div>
             ) : (

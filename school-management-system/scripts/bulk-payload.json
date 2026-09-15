@@ -1,0 +1,5 @@
+{
+    "csv":  "admissionNumber,studentCode,fullName,gender,dateOfBirth,class,section,mobile,email,address,admissionDate\nQA-BULK-1501,STU-QA-1501,QA Bulk Student 1501,MALE,2014-01-01,Class 5,A,9000001501,,North,2025-04-01\nQA-BULK-1501,STU-QA-DUP1501,Dup Student,MALE,2014-01-01,Class 5,A,9000011501,,North,2025-04-01\n,,Missing Name,MALE,2014-01-01,Class 5,A,9000021501,,North,2025-04-01",
+    "academicYearId":  "048685f4-b3ce-45ae-94bf-e9f86937daa2",
+    "branchId":  "856f7fd3-a744-4178-92c9-ff82b43620f9"
+}

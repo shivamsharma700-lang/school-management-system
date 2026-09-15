@@ -356,6 +356,13 @@ export function LibraryPage() {
   const [tab, setTab] = useState("catalogue");
   const [issueFor, setIssueFor] = useState<string | null>(null);
   const [studentId, setStudentId] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [bookForm, setBookForm] = useState({ title: "", author: "", category: "General", copyCode: "", isbn: "", branchId: "" });
+  const branches = useQuery({
+    queryKey: ["branches"],
+    enabled: user?.role === "SUPER_ADMIN",
+    queryFn: () => api<Array<{ id: string; name: string }>>("/api/branches"),
+  });
   const qc = useQueryClient();
   const issue = useMutation({
     mutationFn: () => post(`/api/library/issue?copyId=${issueFor}&studentId=${studentId}`),
@@ -376,10 +383,29 @@ export function LibraryPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const addBook = useMutation({
+    mutationFn: () =>
+      post("/api/library/books", {
+        ...bookForm,
+        branchId: bookForm.branchId || user?.branchId || undefined,
+      }),
+    onSuccess: () => {
+      toast.success("Book added to catalogue");
+      setAddOpen(false);
+      setBookForm({ title: "", author: "", category: "General", copyCode: "", isbn: "", branchId: "" });
+      void qc.invalidateQueries({ queryKey: ["library-copies"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const overdue = (loans.data ?? []).filter((l) => l.status === "ISSUED" && l.dueDate && l.dueDate < todayIso());
   return (
     <div>
-      <PageHeader crumbs={["Campus"]} title="Library" subtitle="Catalogue, loans and returns from the library API. Authors and categories are not exposed yet." />
+      <PageHeader
+        crumbs={["Campus"]}
+        title="Library"
+        subtitle="Catalogue, loans and returns from the library API."
+        action={canLibraryAdmin(user?.role) ? <Button onClick={() => setAddOpen(true)}>Add book</Button> : null}
+      />
       {copies.isDemo ? <div className="mb-3"><DemoChip show /></div> : null}
       <div className="mb-4">
         <Tabs
@@ -394,7 +420,7 @@ export function LibraryPage() {
       </div>
       {tab === "catalogue" ? (
         copies.isLoading ? <Skeleton className="h-64" /> : (copies.data ?? []).length === 0 ? (
-          <EmptyState title="No copies" body="Book copies will appear when the library catalogue is populated." />
+          <EmptyState title="No copies" body="Add a book to populate the library catalogue." />
         ) : (
           <TableShell columns={["Title", "Copy", "Status", ""]}>
             {(copies.data ?? []).map((c) => (
@@ -413,7 +439,7 @@ export function LibraryPage() {
         )
       ) : (
         ((tab === "overdue" ? overdue : loans.data) ?? []).length === 0 ? (
-          <EmptyState title={tab === "overdue" ? "No overdue loans" : "No issued books"} body="Loan history is loaded from /api/library/loans." />
+          <EmptyState title={tab === "overdue" ? "No overdue loans" : "No issued books"} body="Issued and returned copies appear here once books start circulating." />
         ) : (
           <TableShell columns={["Title", "Copy", "Student", "Due", "Status", ""]}>
             {(tab === "overdue" ? overdue : loans.data ?? []).map((l) => (
@@ -442,7 +468,33 @@ export function LibraryPage() {
         </Field>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setIssueFor(null)}>Cancel</Button>
-          <Button disabled={!studentId} onClick={() => issue.mutate()}>Issue book</Button>
+          <Button disabled={!studentId || issue.isPending} onClick={() => issue.mutate()}>Issue</Button>
+        </div>
+      </Modal>
+      <Modal open={addOpen} title="Add book copy" onClose={() => setAddOpen(false)}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Title" required><Input value={bookForm.title} onChange={(e) => setBookForm((f) => ({ ...f, title: e.target.value }))} /></Field>
+          <Field label="Copy code" required><Input value={bookForm.copyCode} onChange={(e) => setBookForm((f) => ({ ...f, copyCode: e.target.value }))} /></Field>
+          <Field label="Author"><Input value={bookForm.author} onChange={(e) => setBookForm((f) => ({ ...f, author: e.target.value }))} /></Field>
+          <Field label="Category"><Input value={bookForm.category} onChange={(e) => setBookForm((f) => ({ ...f, category: e.target.value }))} /></Field>
+          <Field label="ISBN"><Input value={bookForm.isbn} onChange={(e) => setBookForm((f) => ({ ...f, isbn: e.target.value }))} /></Field>
+          {user?.role === "SUPER_ADMIN" ? (
+            <Field label="Campus" required>
+              <Select value={bookForm.branchId} onChange={(e) => setBookForm((f) => ({ ...f, branchId: e.target.value }))}>
+                <option value="">Select campus</option>
+                {(branches.data ?? []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </Select>
+            </Field>
+          ) : null}
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setAddOpen(false)}>Cancel</Button>
+          <Button
+            disabled={!bookForm.title || !bookForm.copyCode || (user?.role === "SUPER_ADMIN" && !bookForm.branchId) || addBook.isPending}
+            onClick={() => addBook.mutate()}
+          >
+            Save
+          </Button>
         </div>
       </Modal>
     </div>
@@ -450,6 +502,7 @@ export function LibraryPage() {
 }
 
 export function TransportPage() {
+  const { user } = useAuth();
   const { selected: child } = useChildScope();
   const students = useQuery({ queryKey: ["students"], queryFn: () => api<PageResponse<Student>>("/api/students?size=20") });
   const [studentId, setStudentId] = useState("");
@@ -460,10 +513,20 @@ export function TransportPage() {
     enabled: Boolean(selected) && !skipApi,
     queryFn: () => api<Array<{ route: string; stop: string; vehicle: string; driver: string; status: string }>>(`/api/transport/my?studentId=${selected}`),
   });
+  const routes = useQuery({
+    queryKey: ["transport-routes"],
+    enabled: isAdminLike(user?.role),
+    queryFn: () => api<Array<{ id: string; name: string; vehicle: string; driver: string; status: string }>>("/api/transport/routes"),
+  });
+  const trips = useQuery({
+    queryKey: ["transport-trips"],
+    enabled: isAdminLike(user?.role),
+    queryFn: () => api<Array<{ id: string; route: string; tripType: string; status: string; tripDate: string }>>("/api/transport/trips"),
+  });
   const rows = useLiveOrDemo(rowsQ, demoTransportAssignment);
   return (
     <div>
-      <PageHeader crumbs={["Campus"]} title="Transport" subtitle="Assigned route, stop, vehicle and driver. Fleet CRUD is not exposed by the API." action={<a href="/app/bus-tracking" className="text-sm font-semibold text-forest-700">Open bus tracking</a>} />
+      <PageHeader crumbs={["Campus"]} title="Transport" subtitle="Student assignments plus live routes, trips and GPS pings for admins." action={<a href="/app/bus-tracking" className="text-sm font-semibold text-forest-700">Open bus tracking</a>} />
       <div className="mb-4 max-w-sm">
         <Select value={selected ?? ""} onChange={(e) => setStudentId(e.target.value)}>
           {(students.data?.items?.length ? students.data.items : child ? [child] : []).map((s) => (
@@ -494,6 +557,40 @@ export function TransportPage() {
           ))}
         </div>
       )}
+      {isAdminLike(user?.role) ? (
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div>
+            <h2 className="mb-3 font-display text-xl">Routes</h2>
+            {(routes.data ?? []).length === 0 ? <p className="text-sm text-slate-500">No routes in this branch.</p> : (
+              <TableShell columns={["Route", "Vehicle", "Driver", "Status"]}>
+                {(routes.data ?? []).map((r) => (
+                  <tr key={r.id}>
+                    <td className="px-4 py-3">{r.name}</td>
+                    <td className="px-4 py-3">{r.vehicle || "—"}</td>
+                    <td className="px-4 py-3">{r.driver || "—"}</td>
+                    <td className="px-4 py-3"><Badge tone={statusTone(r.status)}>{r.status}</Badge></td>
+                  </tr>
+                ))}
+              </TableShell>
+            )}
+          </div>
+          <div>
+            <h2 className="mb-3 font-display text-xl">Today&apos;s trips</h2>
+            {(trips.data ?? []).length === 0 ? <p className="text-sm text-slate-500">No trips scheduled for today.</p> : (
+              <TableShell columns={["Route", "Type", "Status", "Date"]}>
+                {(trips.data ?? []).map((t) => (
+                  <tr key={t.id}>
+                    <td className="px-4 py-3">{t.route}</td>
+                    <td className="px-4 py-3">{t.tripType}</td>
+                    <td className="px-4 py-3"><Badge tone={statusTone(t.status)}>{t.status}</Badge></td>
+                    <td className="px-4 py-3">{t.tripDate}</td>
+                  </tr>
+                ))}
+              </TableShell>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { SCHOOL } from "./schoolMedia";
+
 export type CampusMedia = {
   code: string;
   aliases: string[];
@@ -14,10 +16,10 @@ export type CampusMedia = {
   gallery: string[];
 };
 
-export const LOGIN_HERO = "/assets/campuses/dusk.jpg";
-export const TOUR_VIDEO = "/assets/videos/campus-hero.mp4";
-export const TOUR_VIDEO_FALLBACK = "/assets/videos/campus-tour.mp4";
-export const TOUR_POSTER = "/assets/campuses/dusk.jpg";
+export const LOGIN_HERO = `${SCHOOL.dashboardHero}?v=20260908e`;
+
+
+export const TOUR_POSTER = SCHOOL.campus.hero;
 
 export const CAMPUS_MEDIA: CampusMedia[] = [
   {
@@ -31,9 +33,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "011-4300-1000",
-    email: "main.demo@dps.local",
-    hero: "/assets/campuses/main.jpg",
-    gallery: ["/assets/campuses/main.jpg", "/assets/campuses/main-2.jpg", "/assets/sections/academics.jpg"],
+    email: "main.demo@touchwood.local",
+    hero: SCHOOL.campus.wide,
+    gallery: [SCHOOL.campus.wide, SCHOOL.campus.wide, SCHOOL.classrooms],
   },
   {
     code: "EST",
@@ -46,9 +48,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "011-4300-1002",
-    email: "east.demo@dps.local",
-    hero: "/assets/campuses/east.jpg",
-    gallery: ["/assets/campuses/east.jpg", "/assets/campuses/east-2.jpg", "/assets/sections/students.jpg"],
+    email: "east.demo@touchwood.local",
+    hero: SCHOOL.campus.dusk,
+    gallery: [SCHOOL.campus.dusk, SCHOOL.studentLife, SCHOOL.students],
   },
   {
     code: "NTH",
@@ -61,9 +63,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "011-4300-1001",
-    email: "north.demo@dps.local",
-    hero: "/assets/campuses/north.jpg",
-    gallery: ["/assets/campuses/north.jpg", "/assets/campuses/north-2.jpg", "/assets/sections/sports.jpg"],
+    email: "north.demo@touchwood.local",
+    hero: SCHOOL.campus.wide,
+    gallery: [SCHOOL.campus.wide, SCHOOL.sports, SCHOOL.sportsAthletics],
   },
   {
     code: "STH",
@@ -76,9 +78,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "011-4300-1003",
-    email: "south.demo@dps.local",
-    hero: "/assets/campuses/south.jpg",
-    gallery: ["/assets/campuses/south.jpg", "/assets/campuses/south-2.jpg", "/assets/sections/library.jpg"],
+    email: "south.demo@touchwood.local",
+    hero: SCHOOL.library,
+    gallery: [SCHOOL.library, SCHOOL.campus.dusk, SCHOOL.classroomsLesson],
   },
   {
     code: "WST",
@@ -91,9 +93,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "011-4300-1004",
-    email: "west.demo@dps.local",
-    hero: "/assets/campuses/west.jpg",
-    gallery: ["/assets/campuses/west.jpg", "/assets/campuses/west-2.jpg", "/assets/sections/labs.jpg"],
+    email: "west.demo@touchwood.local",
+    hero: SCHOOL.scienceLab,
+    gallery: [SCHOOL.scienceLab, SCHOOL.computerLab, SCHOOL.auditorium],
   },
   {
     code: "LKV",
@@ -106,9 +108,9 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "0120-430-1006",
-    email: "noida.demo@dps.local",
-    hero: "/assets/campuses/noida.jpg",
-    gallery: ["/assets/campuses/noida.jpg", "/assets/campuses/noida-2.jpg", "/assets/sections/events.jpg"],
+    email: "noida.demo@touchwood.local",
+    hero: SCHOOL.campus.aerial,
+    gallery: [SCHOOL.campus.aerial, SCHOOL.studentLifeFriends, SCHOOL.events],
   },
   {
     code: "HLS",
@@ -116,14 +118,14 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     name: "Greater Noida",
     city: "Knowledge Park",
     location: "Knowledge Park, Greater Noida",
-    description: "Greater Noida Campus sits in Knowledge Park with hostels, labs and expansive grounds.",
-    facilities: ["Hostel", "Research labs", "Indoor stadium", "Canteen court"],
+    description: "Greater Noida Campus sits in Knowledge Park with labs and expansive grounds.",
+    facilities: ["Research labs", "Indoor stadium", "Library", "Sports complex"],
     students: 530,
     classes: "Nursery–Class 12",
     phone: "0120-430-1007",
-    email: "gnoida.demo@dps.local",
-    hero: "/assets/campuses/greater-noida.jpg",
-    gallery: ["/assets/campuses/greater-noida.jpg", "/assets/campuses/greater-noida-2.jpg", "/assets/sections/hostel.jpg"],
+    email: "gnoida.demo@touchwood.local",
+    hero: SCHOOL.sports,
+    gallery: [SCHOOL.sports, SCHOOL.sportsAthletics, SCHOOL.auditorium],
   },
   {
     code: "RVR",
@@ -136,105 +138,101 @@ export const CAMPUS_MEDIA: CampusMedia[] = [
     students: 530,
     classes: "Nursery–Class 12",
     phone: "0124-430-1008",
-    email: "gurgaon.demo@dps.local",
-    hero: "/assets/campuses/gurgaon.jpg",
-    gallery: ["/assets/campuses/gurgaon.jpg", "/assets/campuses/gurgaon-2.jpg", "/assets/sections/transport.jpg"],
+    email: "gurgaon.demo@touchwood.local",
+    hero: SCHOOL.transport,
+    gallery: [SCHOOL.transport, SCHOOL.campus.dusk, SCHOOL.studentsUniform],
   },
 ];
 
 export type SectionVisual = { image: string; position: string };
 
 /** Cache-bust after banner asset refresh so browsers pick up new crops. */
-const ASSET_V = "v=20260327g";
+const ASSET_V = "v=20260908e";
 
 function asset(path: string) {
-  return `${path}?${ASSET_V}`;
+  return path.includes("?") ? path : `${path}?${ASSET_V}`;
 }
 
-const FACE = "center 22%";
-const MID = "center 32%";
-const GROUND = "center 46%";
-const BUILDING = "center 40%";
+const FACE = "center 28%";
+const MID = "center 40%";
+const GROUND = "center 55%";
+const BUILDING = "center 42%";
 
 const SECTION_BY_PATH: Array<{ test: RegExp; image: string; position?: string }> = [
-  { test: /^\/app\/dashboard/, image: asset("/assets/sections/dashboard.jpg"), position: BUILDING },
-  { test: /^\/app\/branches/, image: asset("/assets/sections/branches.jpg"), position: BUILDING },
-  { test: /^\/app\/users/, image: asset("/assets/sections/users.jpg"), position: FACE },
-  { test: /^\/app\/academic-years/, image: asset("/assets/sections/years.jpg"), position: MID },
-  { test: /^\/app\/settings/, image: asset("/assets/sections/settings.jpg"), position: MID },
-  { test: /^\/app\/audit/, image: asset("/assets/sections/audit.jpg"), position: MID },
-  { test: /^\/app\/enquir/, image: asset("/assets/sections/admissions.jpg"), position: FACE },
-  { test: /^\/app\/applications/, image: asset("/assets/sections/admissions.jpg"), position: FACE },
-  { test: /^\/app\/entrance/, image: asset("/assets/sections/exams.jpg"), position: FACE },
-  { test: /^\/app\/interviews/, image: asset("/assets/sections/ptm.jpg"), position: FACE },
-  { test: /^\/app\/admissions/, image: asset("/assets/sections/admissions.jpg"), position: FACE },
-  { test: /^\/app\/students/, image: asset("/assets/sections/students.jpg"), position: "center 48%" },
-  { test: /^\/app\/promotions/, image: asset("/assets/sections/promotions.jpg"), position: FACE },
-  { test: /^\/app\/transfers/, image: asset("/assets/sections/transfers.jpg"), position: BUILDING },
-  { test: /^\/app\/documents/, image: asset("/assets/sections/documents.jpg"), position: MID },
-  { test: /^\/app\/guardians/, image: asset("/assets/sections/parents.jpg"), position: FACE },
-  { test: /^\/app\/children/, image: asset("/assets/sections/parents.jpg"), position: FACE },
-  { test: /^\/app\/teachers/, image: asset("/assets/sections/teachers.jpg"), position: FACE },
-  { test: /^\/app\/staff/, image: asset("/assets/sections/staff.jpg"), position: FACE },
-  { test: /^\/app\/hr/, image: asset("/assets/sections/hr.jpg"), position: FACE },
-  { test: /^\/app\/classes/, image: asset("/assets/sections/classes.jpg"), position: MID },
-  { test: /^\/app\/subjects/, image: asset("/assets/sections/subjects.jpg"), position: MID },
-  { test: /^\/app\/timetable/, image: asset("/assets/sections/timetable.jpg"), position: MID },
-  { test: /^\/app\/homework/, image: asset("/assets/sections/homework.jpg"), position: FACE },
-  { test: /^\/app\/exams/, image: asset("/assets/sections/exams.jpg"), position: FACE },
-  { test: /^\/app\/marks/, image: asset("/assets/sections/marks.jpg"), position: FACE },
-  { test: /^\/app\/results/, image: asset("/assets/sections/results.jpg"), position: FACE },
-  { test: /^\/app\/report-cards/, image: asset("/assets/sections/results.jpg"), position: FACE },
-  { test: /^\/app\/study-materials/, image: asset("/assets/sections/study.jpg"), position: MID },
-  { test: /^\/app\/attendance-reports/, image: asset("/assets/sections/reports.jpg"), position: MID },
-  { test: /^\/app\/staff-attendance/, image: asset("/assets/sections/staff.jpg"), position: FACE },
-  { test: /^\/app\/attendance/, image: asset("/assets/sections/attendance.jpg"), position: FACE },
-  { test: /^\/app\/fees/, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /^\/app\/invoices/, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /^\/app\/payments/, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /^\/app\/receipts/, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /^\/app\/pending-fees/, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /^\/app\/library/, image: asset("/assets/sections/library.jpg"), position: MID },
-  { test: /^\/app\/transport/, image: asset("/assets/sections/transport.jpg"), position: GROUND },
-  { test: /^\/app\/bus-tracking/, image: asset("/assets/sections/bus-tracking.jpg"), position: GROUND },
-  { test: /^\/app\/notices/, image: asset("/assets/sections/notices.jpg"), position: MID },
-  { test: /^\/app\/notifications/, image: asset("/assets/sections/notices.jpg"), position: MID },
-  { test: /^\/app\/complaints/, image: asset("/assets/sections/complaints.jpg"), position: FACE },
-  { test: /^\/app\/communication/, image: asset("/assets/sections/communication.jpg"), position: FACE },
-  { test: /^\/app\/leave-approvals/, image: asset("/assets/sections/leave.jpg"), position: MID },
-  { test: /^\/app\/leave/, image: asset("/assets/sections/leave.jpg"), position: MID },
-  { test: /^\/app\/reports/, image: asset("/assets/sections/reports.jpg"), position: MID },
-  { test: /^\/app\/analytics/, image: asset("/assets/sections/reports.jpg"), position: MID },
-  { test: /^\/app\/inventory/, image: asset("/assets/sections/inventory.jpg"), position: MID },
-  { test: /^\/app\/events/, image: asset("/assets/sections/events.jpg"), position: FACE },
-  { test: /^\/app\/health/, image: asset("/assets/sections/health.jpg"), position: MID },
-  { test: /^\/app\/discipline/, image: asset("/assets/sections/discipline.jpg"), position: FACE },
-  { test: /^\/app\/sports/, image: asset("/assets/sections/sports.jpg"), position: "78% 38%" },
-  { test: /^\/app\/labs/, image: asset("/assets/sections/labs.jpg"), position: MID },
-  { test: /^\/app\/ptm/, image: asset("/assets/sections/ptm.jpg"), position: FACE },
-  { test: /^\/app\/alumni/, image: asset("/assets/sections/alumni.jpg"), position: FACE },
-  { test: /^\/app\/hostel/, image: asset("/assets/sections/hostel.jpg"), position: BUILDING },
-  { test: /^\/app\/canteen/, image: asset("/assets/sections/canteen.jpg"), position: "center 42%" },
+  { test: /^\/app\/dashboard/, image: asset(SCHOOL.dashboardHero), position: BUILDING },
+  { test: /^\/app\/branches/, image: asset(SCHOOL.campus.wide), position: BUILDING },
+  { test: /^\/app\/users/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/academic-years/, image: asset(SCHOOL.achievements), position: MID },
+  { test: /^\/app\/settings/, image: asset(SCHOOL.campus.entrance), position: MID },
+  { test: /^\/app\/audit/, image: asset(SCHOOL.campus.dusk), position: MID },
+  { test: /^\/app\/enquir/, image: asset(SCHOOL.admissions), position: FACE },
+  { test: /^\/app\/applications/, image: asset(SCHOOL.admissions), position: FACE },
+  { test: /^\/app\/entrance/, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /^\/app\/interviews/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/admissions/, image: asset(SCHOOL.admissions), position: FACE },
+  { test: /^\/app\/students/, image: asset(SCHOOL.students), position: FACE },
+  { test: /^\/app\/promotions/, image: asset(SCHOOL.studentsGroup), position: FACE },
+  { test: /^\/app\/transfers/, image: asset(SCHOOL.campus.entrance), position: BUILDING },
+  { test: /^\/app\/documents/, image: asset(SCHOOL.library), position: MID },
+  { test: /^\/app\/guardians/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/children/, image: asset(SCHOOL.studentsUniform), position: FACE },
+  { test: /^\/app\/teachers/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/staff/, image: asset(SCHOOL.leadership), position: FACE },
+  { test: /^\/app\/hr/, image: asset(SCHOOL.leadership), position: FACE },
+  { test: /^\/app\/classes/, image: asset(SCHOOL.classrooms), position: MID },
+  { test: /^\/app\/subjects/, image: asset(SCHOOL.classroomsLesson), position: MID },
+  { test: /^\/app\/timetable/, image: asset(SCHOOL.classrooms), position: MID },
+  { test: /^\/app\/homework/, image: asset(SCHOOL.studentsClassroom), position: FACE },
+  { test: /^\/app\/exams/, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /^\/app\/marks/, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /^\/app\/results/, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /^\/app\/report-cards/, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /^\/app\/study-materials/, image: asset(SCHOOL.library), position: MID },
+  { test: /^\/app\/attendance-reports/, image: asset(SCHOOL.studentsGroup), position: MID },
+  { test: /^\/app\/staff-attendance/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/attendance/, image: asset(SCHOOL.studentsClassroom), position: FACE },
+  { test: /^\/app\/fees/, image: asset(SCHOOL.admissions), position: MID },
+  { test: /^\/app\/invoices/, image: asset(SCHOOL.admissions), position: MID },
+  { test: /^\/app\/payments/, image: asset(SCHOOL.admissions), position: MID },
+  { test: /^\/app\/receipts/, image: asset(SCHOOL.admissions), position: MID },
+  { test: /^\/app\/pending-fees/, image: asset(SCHOOL.admissions), position: MID },
+  { test: /^\/app\/library/, image: asset(SCHOOL.library), position: MID },
+  { test: /^\/app\/transport/, image: asset(SCHOOL.transport), position: GROUND },
+  { test: /^\/app\/bus-tracking/, image: asset(SCHOOL.transport), position: GROUND },
+  { test: /^\/app\/notices/, image: asset(SCHOOL.events), position: MID },
+  { test: /^\/app\/notifications/, image: asset(SCHOOL.events), position: MID },
+  { test: /^\/app\/complaints/, image: asset(SCHOOL.leadership), position: FACE },
+  { test: /^\/app\/communication/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/leave-approvals/, image: asset(SCHOOL.campus.entrance), position: MID },
+  { test: /^\/app\/leave/, image: asset(SCHOOL.campus.entrance), position: MID },
+  { test: /^\/app\/reports/, image: asset(SCHOOL.achievements), position: MID },
+  { test: /^\/app\/analytics/, image: asset(SCHOOL.campus.wide), position: MID },
+  { test: /^\/app\/inventory/, image: asset(SCHOOL.library), position: MID },
+  { test: /^\/app\/events/, image: asset(SCHOOL.events), position: FACE },
+  { test: /^\/app\/health/, image: asset(SCHOOL.studentLife), position: MID },
+  { test: /^\/app\/discipline/, image: asset(SCHOOL.studentsUniform), position: FACE },
+  { test: /^\/app\/sports/, image: asset(SCHOOL.sports), position: GROUND },
+  { test: /^\/app\/labs/, image: asset(SCHOOL.scienceLab), position: MID },
+  { test: /^\/app\/ptm/, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /^\/app\/alumni/, image: asset(SCHOOL.studentsGroup), position: FACE },
 ];
 
 const TITLE_HINTS: Array<{ test: RegExp; image: string; position?: string }> = [
-  { test: /library/i, image: asset("/assets/sections/library.jpg"), position: MID },
-  { test: /sport/i, image: asset("/assets/sections/sports.jpg"), position: GROUND },
-  { test: /lab/i, image: asset("/assets/sections/labs.jpg"), position: MID },
-  { test: /bus|transport/i, image: asset("/assets/sections/transport.jpg"), position: GROUND },
-  { test: /fee|invoice|payment|finance/i, image: asset("/assets/sections/fees.jpg"), position: MID },
-  { test: /exam|mark|result/i, image: asset("/assets/sections/exams.jpg"), position: FACE },
-  { test: /homework|study/i, image: asset("/assets/sections/homework.jpg"), position: FACE },
-  { test: /attend/i, image: asset("/assets/sections/attendance.jpg"), position: FACE },
-  { test: /teacher/i, image: asset("/assets/sections/teachers.jpg"), position: FACE },
-  { test: /guardian|parent/i, image: asset("/assets/sections/parents.jpg"), position: FACE },
-  { test: /student/i, image: asset("/assets/sections/students.jpg"), position: FACE },
-  { test: /admission|enquir|application/i, image: asset("/assets/sections/admissions.jpg"), position: FACE },
-  { test: /event/i, image: asset("/assets/sections/events.jpg"), position: FACE },
-  { test: /hostel/i, image: asset("/assets/sections/hostel.jpg"), position: BUILDING },
-  { test: /canteen|cafeteria/i, image: asset("/assets/sections/canteen.jpg"), position: MID },
-  { test: /report|analytic/i, image: asset("/assets/sections/reports.jpg"), position: MID },
-  { test: /campus|branch/i, image: asset("/assets/sections/branches.jpg"), position: BUILDING },
+  { test: /library/i, image: asset(SCHOOL.library), position: MID },
+  { test: /sport/i, image: asset(SCHOOL.sports), position: GROUND },
+  { test: /lab/i, image: asset(SCHOOL.scienceLab), position: MID },
+  { test: /bus|transport/i, image: asset(SCHOOL.transport), position: GROUND },
+  { test: /fee|invoice|payment|finance/i, image: asset(SCHOOL.admissions), position: MID },
+  { test: /exam|mark|result/i, image: asset(SCHOOL.achievements), position: FACE },
+  { test: /homework|study/i, image: asset(SCHOOL.studentsClassroom), position: FACE },
+  { test: /attend/i, image: asset(SCHOOL.studentsClassroom), position: FACE },
+  { test: /teacher/i, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /guardian|parent/i, image: asset(SCHOOL.teachers), position: FACE },
+  { test: /student/i, image: asset(SCHOOL.students), position: FACE },
+  { test: /admission|enquir|application/i, image: asset(SCHOOL.admissions), position: FACE },
+  { test: /event/i, image: asset(SCHOOL.events), position: FACE },
+  { test: /report|analytic/i, image: asset(SCHOOL.achievements), position: MID },
+  { test: /campus|branch/i, image: asset(SCHOOL.campus.wide), position: BUILDING },
 ];
 
 export function campusMedia(code?: string | null, name?: string | null): CampusMedia {
@@ -260,7 +258,7 @@ export function sectionVisualForPath(pathname?: string | null, title?: string | 
     const titled = TITLE_HINTS.find((row) => row.test.test(title));
     if (titled) return { image: titled.image, position: titled.position ?? MID };
   }
-  return { image: asset("/assets/campuses/dusk.jpg"), position: BUILDING };
+  return { image: asset(SCHOOL.campus.dusk), position: BUILDING };
 }
 
 export function sectionImageForPath(pathname?: string | null, title?: string | null) {

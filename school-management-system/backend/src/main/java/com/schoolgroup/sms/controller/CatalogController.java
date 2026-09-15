@@ -50,6 +50,12 @@ public class CatalogController {
         return CatalogService.toYear(catalog.createYear(request));
     }
 
+    @PutMapping("/academic-years/{id}")
+    public SchoolDtos.AcademicYearResponse updateYear(@PathVariable UUID id,
+                                                      @Valid @RequestBody SchoolDtos.AcademicYearRequest request) {
+        return CatalogService.toYear(catalog.updateYear(id, request));
+    }
+
     @GetMapping("/classes")
     public List<SchoolDtos.ClassResponse> classes(@RequestParam(required = false) UUID branchId) {
         return catalog.listClasses(branchId).stream().map(CatalogService::toClass).toList();
@@ -58,6 +64,12 @@ public class CatalogController {
     @PostMapping("/classes")
     public SchoolDtos.ClassResponse createClass(@Valid @RequestBody SchoolDtos.ClassRequest request) {
         return CatalogService.toClass(catalog.createClass(request));
+    }
+
+    @PutMapping("/classes/{classId}")
+    public SchoolDtos.ClassResponse updateClass(@PathVariable UUID classId,
+                                                @Valid @RequestBody SchoolDtos.ClassRequest request) {
+        return CatalogService.toClass(catalog.updateClass(classId, request));
     }
 
     @GetMapping("/classes/{classId}")
@@ -81,6 +93,13 @@ public class CatalogController {
         return CatalogService.toSection(catalog.createSection(classId, request));
     }
 
+    @PutMapping("/classes/{classId}/sections/{sectionId}")
+    public SchoolDtos.SectionResponse updateSection(@PathVariable UUID classId,
+                                                    @PathVariable UUID sectionId,
+                                                    @Valid @RequestBody SchoolDtos.SectionRequest request) {
+        return CatalogService.toSection(catalog.updateSection(classId, sectionId, request));
+    }
+
     @GetMapping("/subjects")
     public List<SchoolDtos.SubjectResponse> subjects(@RequestParam(required = false) UUID branchId) {
         return catalog.listSubjects(branchId).stream().map(CatalogService::toSubject).toList();
@@ -89,5 +108,11 @@ public class CatalogController {
     @PostMapping("/subjects")
     public SchoolDtos.SubjectResponse createSubject(@Valid @RequestBody SchoolDtos.SubjectRequest request) {
         return CatalogService.toSubject(catalog.createSubject(request));
+    }
+
+    @PutMapping("/subjects/{id}")
+    public SchoolDtos.SubjectResponse updateSubject(@PathVariable UUID id,
+                                                    @Valid @RequestBody SchoolDtos.SubjectRequest request) {
+        return CatalogService.toSubject(catalog.updateSubject(id, request));
     }
 }

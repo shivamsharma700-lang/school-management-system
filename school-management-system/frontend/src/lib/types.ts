@@ -157,6 +157,16 @@ export type DashboardAnalytics = {
 
 export type StudentWorkspace = {
   studentId: string;
+  guardians?: Array<{
+    id: string;
+    fullName: string;
+    mobile: string;
+    email: string;
+    relationship: string;
+    primary: boolean;
+    occupation?: string;
+    address?: string;
+  }>;
   attendance: {
     percentage: number;
     present: number;
@@ -174,6 +184,8 @@ export type StudentWorkspace = {
   transport: Array<{ route: string; stop: string; vehicle: string; driver: string; status: string }>;
   leave: Array<{ id: string; leaveType: string; startDate: string; endDate: string; reason: string; status: string }>;
   timetable: Array<{ id: string; dayOfWeek: number; startTime: string; endTime: string; room: string; subject: string; teacher: string; className: string; sectionName: string }>;
+  health?: Array<{ id: string; title: string; category: string; status: string; scheduledAt: string; location: string; details: string; updatedAt: string }>;
+  discipline?: Array<{ id: string; title: string; category: string; status: string; scheduledAt: string; location: string; details: string; updatedAt: string }>;
   activity: Array<{ when: string; title: string; detail: string }>;
 };
 

@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.UUID;
 
 public interface BookCategoryRepository extends JpaRepository<BookCategory, UUID>, JpaSpecificationExecutor<BookCategory> {
+    java.util.Optional<BookCategory> findFirstByBranchIdAndNameIgnoreCase(UUID branchId, String name);
 }

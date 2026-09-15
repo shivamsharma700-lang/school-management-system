@@ -26,14 +26,14 @@ export function ChildProvider({ children }: { children: ReactNode }) {
   });
   const live = useLiveOrDemo(query, demoStudentPage);
   const list = enabled ? unwrapList<Student>(live.data) : [];
-  const [selectedId, setSelectedId] = useState<string>(() => sessionStorage.getItem("dps_child") ?? "");
+  const [selectedId, setSelectedId] = useState<string>(() => sessionStorage.getItem("twhps_child") ?? "");
 
   useEffect(() => {
     if (!list.length) return;
     if (!selectedId || !list.some((s) => s.id === selectedId)) {
       const next = list[0].id;
       setSelectedId(next);
-      sessionStorage.setItem("dps_child", next);
+      sessionStorage.setItem("twhps_child", next);
     }
   }, [list, selectedId]);
 
@@ -43,7 +43,7 @@ export function ChildProvider({ children }: { children: ReactNode }) {
       selected: list.find((s) => s.id === selectedId) ?? list[0],
       setSelectedId: (id: string) => {
         setSelectedId(id);
-        sessionStorage.setItem("dps_child", id);
+        sessionStorage.setItem("twhps_child", id);
       },
       isDemo: enabled && live.isDemo,
     }),

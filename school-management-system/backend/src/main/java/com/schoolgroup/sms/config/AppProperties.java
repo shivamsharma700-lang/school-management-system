@@ -10,6 +10,7 @@ public class AppProperties {
     private final Files files = new Files();
     private final Payment payment = new Payment();
     private final Seed seed = new Seed();
+    private final Bootstrap bootstrap = new Bootstrap();
 
     public Jwt getJwt() {
         return jwt;
@@ -29,6 +30,10 @@ public class AppProperties {
 
     public Seed getSeed() {
         return seed;
+    }
+
+    public Bootstrap getBootstrap() {
+        return bootstrap;
     }
 
     public static class Jwt {
@@ -133,6 +138,55 @@ public class AppProperties {
 
         public void setVolume(boolean volume) {
             this.volume = volume;
+        }
+    }
+
+    /** One-time first SUPER_ADMIN when the users table is empty. Off by default. */
+    public static class Bootstrap {
+        private boolean enabled = false;
+        private String email;
+        private String username;
+        private String password;
+        private String fullName = "Super Admin";
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
         }
     }
 }

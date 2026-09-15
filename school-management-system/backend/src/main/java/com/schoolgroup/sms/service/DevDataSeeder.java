@@ -57,6 +57,7 @@ import com.schoolgroup.sms.repository.VehicleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -68,6 +69,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Component
+@Profile({"dev", "test"})
 @Order(1)
 public class DevDataSeeder implements CommandLineRunner {
 
@@ -147,7 +149,13 @@ public class DevDataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (!properties.getSeed().isEnabled() || users.count() > 0) {
+        if (!properties.getSeed().isEnabled()) {
+            return;
+        }
+        if (users.count() > 0) {
+            // Already seeded: only add dev accounts introduced after the first run
+            // (e.g. the TRANSPORT operator) so existing local data is preserved.
+            topUpDevAccounts();
             return;
         }
         log.warn("Seeding DEVELOPMENT DATA only. Do not use these accounts in production.");
@@ -191,6 +199,7 @@ public class DevDataSeeder implements CommandLineRunner {
         UserAccount accountant = user("accountant@sms.local", "accountant", "Rahul Mehta", Role.ACCOUNTANT, primary);
         UserAccount parentUser = user("parent@sms.local", "parent", "Priya Sharma", Role.PARENT, primary);
         UserAccount studentUser = user("student@sms.local", "student", "Arjun Sharma", Role.STUDENT, primary);
+        UserAccount transportUser = user("transport@sms.local", "transport", "Vikram Singh", Role.TRANSPORT, primary);
 
         SchoolClass grade5 = schoolClass(primary, "Grade 5", 5);
         Section sectionA = section(grade5, "A");
@@ -202,6 +211,7 @@ public class DevDataSeeder implements CommandLineRunner {
         staff(principal, primary, "PRN-1001", "Principal", "PRINCIPAL");
         staff(accountant, primary, "ACC-1001", "Accountant", "ACCOUNTANT");
         staff(branchAdmin, primary, "ADM-1001", "Branch Admin", "ADMIN");
+        staff(transportUser, primary, "TRN-1001", "Transport Incharge", "STAFF");
 
         TeacherAssignment assignment = new TeacherAssignment();
         assignment.setStaff(teacher);
@@ -419,6 +429,23 @@ public class DevDataSeeder implements CommandLineRunner {
         y.setEndDate(end);
         y.setStatus(status);
         return years.save(y);
+    }
+
+    /**
+     * Adds development accounts that did not exist when this database was first
+     * seeded. Runs only while seeding is enabled, so it never touches production.
+     */
+    private void topUpDevAccounts() {
+        if (users.findByUsernameIgnoreCase("transport").isPresent()) {
+            return;
+        }
+        Branch primary = branches.findAll().stream().findFirst().orElse(null);
+        if (primary == null) {
+            return;
+        }
+        UserAccount transportUser = user("transport@sms.local", "transport", "Vikram Singh", Role.TRANSPORT, primary);
+        staff(transportUser, primary, "TRN-1001", "Transport Incharge", "STAFF");
+        log.warn("Added missing development account: transport / {}", DEV_PASSWORD);
     }
 
     private UserAccount user(String email, String username, String name, Role role, Branch branch) {

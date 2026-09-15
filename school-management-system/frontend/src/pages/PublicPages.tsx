@@ -1,32 +1,55 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bus, CheckCircle2, Clock3, Mail, MapPin, Phone, Play, X } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  BookOpen,
+  Bus,
+  CheckCircle2,
+  Clock3,
+  GraduationCap,
+  Mail,
+  MapPin,
+  Phone,
+  Play,
+  Users,
+  X,
+} from "lucide-react";
 import { PublicChrome } from "../components/PublicChrome";
-import { MediaImage } from "../components/media";
+import { FeatureIcon, SiteCta, SiteHeading, SiteKicker, SiteSection } from "../components/SiteChrome";
+import { MediaImage, FieldMedia } from "../components/media";
 import { VirtualTour } from "../components/VirtualTour";
 import { CAMPUS_MEDIA } from "../lib/mediaCatalog";
+import { SITE_MEDIA, SCHOOL_CROP } from "../lib/schoolMedia";
 import {
   AWARDS,
+  SPORTS_OFFERED,
+  DEPARTMENTS,
   EVENTS,
   FACILITIES,
+  FACULTY_SPOTLIGHT,
   GALLERY,
   LIFE,
+  MISSION,
+  PRINCIPAL_MESSAGE,
   PROGRAMMES,
+  SCHOOL_FACTS,
   STEPS,
   TOPPERS,
   VALUES,
+  VISION,
 } from "./homeContent";
 
-function HeroBand({ image, kicker, title, body }: { image: string; kicker: string; title: string; body: string }) {
+function HeroBand({ image, kicker, title, body, position }: { image: string; kicker: string; title: string; body: string; position?: string }) {
   return (
-    <section className="relative min-h-[280px] overflow-hidden px-5 py-20 text-white lg:px-10">
-      <MediaImage src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-[#07131c]/72" />
-      <div className="relative z-10 mx-auto max-w-[1280px]">
-        <p className="stat-kicker text-gilt-400">{kicker}</p>
-        <h1 className="mt-3 max-w-3xl font-display text-4xl leading-tight sm:text-6xl">{title}</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80">{body}</p>
+    <section className="relative max-h-[min(48svh,22rem)] min-h-[min(36svh,16rem)] overflow-hidden px-4 py-12 text-white sm:min-h-[min(42svh,18rem)] sm:px-5 sm:py-16 lg:px-10">
+      <MediaImage src={image} alt="" position={position ?? "center 38%"} fit="cover" className="absolute inset-0 h-full w-full" loading="eager" />
+      <div className="absolute inset-0 bg-ink-950/65" />
+      <div className="relative z-10 mx-auto max-w-[1100px]">
+        <SiteKicker light>{kicker}</SiteKicker>
+        <h1 className="type-hero mt-3 max-w-2xl font-display font-medium tracking-[-0.03em]">{title}</h1>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-white/80 sm:mt-4 sm:text-[15px] sm:leading-7">{body}</p>
       </div>
     </section>
   );
@@ -34,43 +57,73 @@ function HeroBand({ image, kicker, title, body }: { image: string; kicker: strin
 
 export function AboutPage() {
   const [more, setMore] = useState(false);
+  const icons = [GraduationCap, Users, Award, BookOpen];
   return (
     <PublicChrome>
-      <HeroBand image="/assets/campuses/main.jpg" kicker="About" title="A CBSE school group that still knows every child by name." body="Eight campuses across Delhi-NCR. Nursery through Class 12. Original copy — this is not a replica of any other school’s prospectus." />
-      <section className="bg-[#f4f1ea] px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-10 lg:grid-cols-2">
-          <article className="rounded-[24px] bg-white p-7 shadow-card">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gilt-600">Vision</p>
-            <p className="mt-3 text-sm leading-7 text-slate-600">A generation of students who leave us ready for university, work and citizenship — not merely for the next examination.</p>
-          </article>
-          <article className="rounded-[24px] bg-white p-7 shadow-card">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gilt-600">Mission</p>
-            <p className="mt-3 text-sm leading-7 text-slate-600">To teach with rigour, to coach with patience, and to keep every campus safe, green and ambitious.</p>
-          </article>
-        </div>
-        <div className="mx-auto mt-8 grid max-w-[1280px] gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {VALUES.map((item, i) => (
-            <article key={item.title} className="rounded-[24px] bg-white p-6">
-              <img src={["/assets/3d/books.svg", "/assets/3d/student.svg", "/assets/3d/teacher.svg", "/assets/3d/crest-orb.svg"][i]} alt="" className="h-11 w-11" />
-              <h2 className="mt-4 font-display text-2xl">{item.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <MediaImage src="/assets/sections/principal.jpg" alt="Principal of Delhi Public School" className="h-[420px] w-full rounded-[28px] object-cover object-top shadow-pop" />
+      <HeroBand
+        image={SITE_MEDIA.aboutImage}
+        position={SCHOOL_CROP.campusWide}
+        kicker="About the school"
+        title={`${SCHOOL_FACTS.name} — CBSE education from Nursery to Class XII`}
+        body={`${SCHOOL_FACTS.type} · ${SCHOOL_FACTS.campuses} · Established ${SCHOOL_FACTS.established}.`}
+      />
+      <SiteSection>
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className="stat-kicker text-gilt-600">Principal</p>
-            <h2 className="mt-3 font-display text-4xl">A letter from the Principal’s desk.</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600">We open each year with a simple hope: that every child who walks through our gates feels expected, challenged and safe.</p>
-            {more ? <p className="mt-4 text-sm leading-7 text-slate-600">Our teachers are asked to know names, not just marks. Come and walk a campus. The buildings will speak; the children will speak more clearly.</p> : null}
-            <button type="button" className="mt-6 text-sm font-semibold" onClick={() => setMore((v) => !v)}>{more ? "Show less" : "Read more"}</button>
-            <p className="mt-4 text-sm font-semibold">Dr. Kavita Sharma · Principal</p>
+            <SiteKicker>Our school</SiteKicker>
+            <SiteHeading
+              title="An established CBSE school community in Delhi-NCR"
+              body={`${SCHOOL_FACTS.name} follows the ${SCHOOL_FACTS.affiliation}. We operate as a ${SCHOOL_FACTS.type.toLowerCase()} with English as the medium of instruction, serving families from Nursery through Class XII.`}
+            />
+            <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+              <div className="border-t border-ink-900/10 pt-3"><dt className="text-xs text-slate-500">Board</dt><dd className="font-semibold">{SCHOOL_FACTS.board}</dd></div>
+              <div className="border-t border-ink-900/10 pt-3"><dt className="text-xs text-slate-500">Classes</dt><dd className="font-semibold">{SCHOOL_FACTS.classes}</dd></div>
+              <div className="border-t border-ink-900/10 pt-3"><dt className="text-xs text-slate-500">Established</dt><dd className="font-semibold">{SCHOOL_FACTS.established}</dd></div>
+              <div className="border-t border-ink-900/10 pt-3"><dt className="text-xs text-slate-500">Office</dt><dd className="font-semibold">{SCHOOL_FACTS.officeHours}</dd></div>
+            </dl>
+          </div>
+          <FieldMedia src={SITE_MEDIA.visionImage} alt="Students on campus" frame="section" />
+        </div>
+        <div className="mt-12 grid gap-8 lg:grid-cols-2">
+          <article className="border-t border-ink-900/10 pt-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gilt-600">Vision</p>
+            <p className="mt-4 text-[15px] leading-7 text-slate-600">{VISION}</p>
+          </article>
+          <article className="border-t border-ink-900/10 pt-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gilt-600">Mission</p>
+            <p className="mt-4 text-[15px] leading-7 text-slate-600">{MISSION}</p>
+          </article>
+        </div>
+        <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {VALUES.map((item, i) => {
+            const Icon = icons[i] ?? BookOpen;
+            return (
+              <article key={item.title}>
+                <FeatureIcon icon={Icon} />
+                <h2 className="mt-4 font-display text-xl font-medium">{item.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+              </article>
+            );
+          })}
+        </div>
+      </SiteSection>
+      <SiteSection tone="white">
+        <div className="grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+          <FieldMedia src={PRINCIPAL_MESSAGE.image} alt={PRINCIPAL_MESSAGE.name} frame="portrait" position={SCHOOL_CROP.principal} className="mx-auto" />
+          <div>
+            <SiteKicker>Principal’s message</SiteKicker>
+            <SiteHeading title="From the Principal’s desk" />
+            <p className="mt-5 text-[15px] leading-7 text-slate-600">{PRINCIPAL_MESSAGE.excerpt}</p>
+            {more ? <p className="mt-4 text-[15px] leading-7 text-slate-600">{PRINCIPAL_MESSAGE.body}</p> : null}
+            <button type="button" className="mt-6 text-sm font-semibold text-forest-700" onClick={() => setMore((v) => !v)}>
+              {more ? "Show less" : "Read full message"}
+            </button>
+            <p className="mt-6 text-sm font-semibold">
+              {PRINCIPAL_MESSAGE.name} · {PRINCIPAL_MESSAGE.title}
+            </p>
           </div>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -78,34 +131,72 @@ export function AboutPage() {
 export function AcademicsPage() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/academics.jpg" kicker="Academics" title="One pathway, five chapters." body="CBSE throughout, with Science, Commerce and Humanities in Classes XI–XII." />
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-6 md:grid-cols-2">
+      <HeroBand
+        image={SITE_MEDIA.academicImage}
+        position={SCHOOL_CROP.classroom}
+        kicker="Academics"
+        title="CBSE curriculum from Early Years to Class XII"
+        body="Science, Commerce and Humanities streams in Classes XI–XII, with laboratory practicals and board preparation."
+      />
+      <SiteSection tone="white">
+        <div className="grid gap-8 lg:grid-cols-2">
           {PROGRAMMES.map((p) => (
-            <article key={p.title} className="img-zoom overflow-hidden rounded-[24px] bg-[#f4f1ea] shadow-card">
-              <MediaImage src={p.img} alt={p.title} className="h-56 w-full object-cover" />
-              <div className="p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gilt-600">{p.range}</p>
-                <h2 className="mt-2 font-display text-3xl">{p.title}</h2>
+            <article key={p.title} className="border border-ink-900/10">
+              <FieldMedia src={p.img} alt={p.title} frame="card" />
+              <div className="p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-forest-600">{p.range}</p>
+                <h2 className="type-card mt-1.5 font-display font-medium">{p.title}</h2>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{p.body}</p>
+                <dl className="mt-4 grid gap-2 border-t border-ink-900/8 pt-3 text-xs text-slate-600 sm:grid-cols-2">
+                  <div><dt className="font-semibold text-ink-800">Subjects</dt><dd className="mt-1">{p.subjects}</dd></div>
+                  <div><dt className="font-semibold text-ink-800">Approach</dt><dd className="mt-1">{p.approach}</dd></div>
+                </dl>
               </div>
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-10 max-w-[1280px] rounded-[28px] bg-[#07131c] p-8 text-white">
-          <h2 className="font-display text-3xl">Honour board</h2>
-          <p className="mt-2 text-xs text-gilt-400">Sample scores — labelled demo, not live board data.</p>
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
-            {TOPPERS.map((t) => (
-              <article key={t.name} className="rounded-2xl border border-white/10 p-4">
-                <p className="font-display text-3xl text-gilt-400">{t.score}</p>
-                <p className="mt-2 font-semibold">{t.name}</p>
-                <p className="text-sm text-white/60">{t.klass}</p>
+        <div className="mt-14">
+          <SiteKicker>Departments</SiteKicker>
+          <SiteHeading title="Faculty departments" body="Subject teams plan schemes of work, assessments and remedial support." />
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {DEPARTMENTS.map((d) => (
+              <article key={d.name} className="border border-ink-900/10 bg-canvas/50 p-4">
+                <h3 className="font-semibold text-ink-900">{d.name}</h3>
+                <p className="mt-1 text-xs text-forest-700">{d.head}</p>
+                <p className="mt-2 text-sm text-slate-600">{d.focus}</p>
               </article>
             ))}
           </div>
         </div>
-      </section>
+        <div className="mt-14">
+          <SiteKicker>Faculty</SiteKicker>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FACULTY_SPOTLIGHT.map((f) => (
+              <article key={f.name} className="border border-ink-900/10 bg-white p-3">
+                <FieldMedia src={f.img} alt={f.name} frame="profile" className="mx-auto" />
+                <h3 className="mt-3 text-center font-semibold">{f.name}</h3>
+                <p className="text-center text-xs text-slate-500">{f.role}</p>
+                <p className="mt-1 text-center text-[11px] text-slate-400">{f.qual}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="mt-16 bg-ink-950 p-8 text-white sm:p-12">
+          <SiteKicker light>Honour board</SiteKicker>
+          <h2 className="type-section mt-3 font-display font-medium">Illustrative board results</h2>
+          <p className="mt-2 text-xs text-gilt-400">Labelled demo scores — not live CBSE result data.</p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {TOPPERS.map((t) => (
+              <article key={t.name} className="border-t border-white/15 pt-4">
+                <p className="font-display type-module text-gilt-400">{t.score}</p>
+                <p className="mt-3 font-semibold">{t.name}</p>
+                <p className="text-sm text-white/60">{t.klass}</p>
+                <p className="mt-1 text-[11px] text-white/40">{t.note}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -123,38 +214,49 @@ export function AdmissionsPagePublic() {
   };
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/admissions.jpg" kicker="Admissions" title="Admissions Open for 2026–27." body="Nursery through Class VIII, and limited meritorious places in senior classes. Offers are confirmed in the School Portal." />
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+      <HeroBand
+        image={SITE_MEDIA.admissionsImage}
+        position="center 40%"
+        kicker="Admissions"
+        title="Admissions open for 2026–27."
+        body="Nursery through Class VIII, and limited meritorious places in senior classes. Offers are confirmed in the School Portal."
+      />
+      <SiteSection tone="white">
+        <div className="grid gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2">
               {STEPS.map((s) => (
-                <article key={s.n} className="rounded-[22px] border border-[#053321]/10 p-5">
+                <article key={s.n} className="border-t border-ink-900/10 pt-5">
                   <p className="font-display text-2xl text-gilt-600">{s.n}</p>
                   <h2 className="mt-2 font-semibold">{s.title}</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{s.body}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{s.body}</p>
                 </article>
               ))}
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/login" className="rounded-full bg-[#053321] px-5 py-3 text-sm font-semibold text-white">Apply Now</Link>
-              <Link to="/contact" className="rounded-full border border-[#053321]/20 px-5 py-3 text-sm font-semibold">Contact Admissions</Link>
-              <Link to="/login" className="rounded-full px-5 py-3 text-sm font-semibold">Fee information in the portal</Link>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <SiteCta to="/login" variant="primary">
+                Apply now
+              </SiteCta>
+              <SiteCta to="/contact" variant="secondary">
+                Contact admissions
+              </SiteCta>
             </div>
           </div>
-          <form className="rounded-[28px] bg-[#f4f1ea] p-7 shadow-card" onSubmit={enquire}>
-            <p className="font-display text-2xl">Start an enquiry</p>
-            <p className="mt-1 text-sm text-slate-500">This form does not create a live admission record.</p>
-            <label className="mt-5 block text-sm font-medium">Parent name</label>
-            <input name="name" className="mt-1 w-full rounded-xl border border-[#053321]/10 bg-white px-3 py-2.5 text-sm" />
+          <form className="border border-ink-900/10 bg-canvas p-8" onSubmit={enquire}>
+            <p className="font-display text-2xl font-medium">Start an enquiry</p>
+            <p className="mt-2 text-sm text-slate-500">This form does not create a live admission record.</p>
+            <label className="mt-6 block text-sm font-medium">Parent name</label>
+            <input name="name" className="mt-1.5 w-full border border-ink-900/10 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-forest-600" />
             <label className="mt-4 block text-sm font-medium">Email</label>
-            <input name="email" type="email" className="mt-1 w-full rounded-xl border border-[#053321]/10 bg-white px-3 py-2.5 text-sm" />
+            <input name="email" type="email" className="mt-1.5 w-full border border-ink-900/10 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-forest-600" />
             <label className="mt-4 block text-sm font-medium">Class seeking</label>
-            <input name="klass" placeholder="e.g. Nursery, VI, XI" className="mt-1 w-full rounded-xl border border-[#053321]/10 bg-white px-3 py-2.5 text-sm" />
-            <button type="submit" className="mt-6 w-full rounded-full bg-[#053321] py-3 text-sm font-semibold text-white">Submit enquiry</button>
+            <input name="klass" placeholder="e.g. Nursery, VI, XI" className="mt-1.5 w-full border border-ink-900/10 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-forest-600" />
+            <button type="submit" className="mt-6 w-full rounded-full bg-ink-900 py-3 text-sm font-semibold text-white">
+              Submit enquiry
+            </button>
           </form>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -163,35 +265,44 @@ export function CampusPage() {
   const [tour, setTour] = useState(false);
   return (
     <PublicChrome>
-      <HeroBand image="/assets/campuses/noida.jpg" kicker="Campus / Infrastructure" title="Places built for teaching, not for show." body="Laboratories, libraries, grounds and quiet courtyards. Photographs are licensed stills used to illustrate fictional Delhi-NCR campuses." />
-      <section className="bg-[#f4f1ea] px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FACILITIES.map((f, i) => (
-            <article key={f.title} className={`img-zoom relative overflow-hidden rounded-[24px] ${i === 0 || i === 6 ? "sm:col-span-2" : ""}`}>
-              <MediaImage src={f.img} alt={f.title} className={i === 0 || i === 6 ? "h-72 w-full object-cover lg:h-[22rem]" : "h-56 w-full object-cover"} />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#07131c]/80 to-transparent" />
-              <h2 className="absolute bottom-4 left-5 font-display text-2xl text-white">{f.title}</h2>
+      <HeroBand
+        image={SITE_MEDIA.campusImage}
+        position={SCHOOL_CROP.campusWide}
+        kicker="Campus"
+        title="Places built for teaching, not for show."
+        body="Laboratories, libraries, grounds and quiet courtyards across eight Delhi-NCR campuses."
+      />
+      <SiteSection>
+        <div className="grid gap-8 sm:grid-cols-2">
+          {FACILITIES.map((f) => (
+            <article key={f.title}>
+              <FieldMedia src={f.img} alt={f.title} frame="card" />
+              <h2 className="type-card mt-4 font-display font-medium">{f.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{f.body}</p>
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-12 max-w-[1280px]">
-          <h2 className="font-display text-4xl">Eight campuses</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-16">
+          <SiteKicker>Eight campuses</SiteKicker>
+          <SiteHeading title="Delhi-NCR, under one pastoral thread." />
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {CAMPUS_MEDIA.map((c) => (
-              <article key={c.code} className="overflow-hidden rounded-[22px] bg-white shadow-card">
-                <MediaImage src={c.hero} alt={c.name} className="h-40 w-full object-cover" />
-                <div className="p-4">
-                  <p className="font-display text-xl">{c.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">{c.location}</p>
-                </div>
+              <article key={c.code}>
+                <FieldMedia src={c.hero} alt={c.name} frame="card" position="center 35%" />
+                <p className="mt-4 font-display text-xl font-medium">{c.name}</p>
+                <p className="mt-1 text-sm text-slate-500">{c.location}</p>
               </article>
             ))}
           </div>
-          <button type="button" onClick={() => setTour(true)} className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#053321] px-5 py-3 text-sm font-semibold text-white">
-            <Play size={14} fill="currentColor" /> Take a Virtual Campus Tour
+          <button
+            type="button"
+            onClick={() => setTour(true)}
+            className="mt-10 inline-flex items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-semibold text-white"
+          >
+            <Play size={14} fill="currentColor" /> Virtual campus tour
           </button>
         </div>
-      </section>
+      </SiteSection>
       <VirtualTour open={tour} onClose={() => setTour(false)} />
     </PublicChrome>
   );
@@ -200,20 +311,24 @@ export function CampusPage() {
 export function StudentLifePage() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/students.jpg" kicker="Student life" title="The hours after the last bell matter as much as the ones before it." body="Sports, arts, houses, clubs and service — not as extras, but as the school day." />
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <HeroBand
+        image={SITE_MEDIA.studentLifeImage}
+        position="center 30%"
+        kicker="Student life"
+        title="The hours after the last bell matter as much as the ones before it."
+        body="Arts, clubs, houses and service — not as extras, but as the school day."
+      />
+      <SiteSection tone="white">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {LIFE.map((item) => (
-            <article key={item.title} className="img-zoom overflow-hidden rounded-[24px] bg-[#f4f1ea] shadow-card">
-              <MediaImage src={item.img} alt={item.title} className="h-44 w-full object-cover" />
-              <div className="p-5">
-                <h2 className="font-display text-2xl">{item.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-              </div>
+            <article key={item.title}>
+              <FieldMedia src={item.img} alt={item.title} frame="portrait" className="mx-auto !max-h-72" />
+              <h2 className="type-card mt-4 font-display font-medium">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
             </article>
           ))}
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -221,20 +336,61 @@ export function StudentLifePage() {
 export function SportsPagePublic() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/sports.jpg" kicker="Sports" title="Fields, courts and a culture of fair play." body="Athletics, football, basketball, swimming and house matches. Coaches treat fitness as part of education." />
-      <section className="bg-[#f4f1ea] px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-4 md:grid-cols-3">
+      <HeroBand
+        image={SITE_MEDIA.sportsImage}
+        position={SCHOOL_CROP.sports}
+        kicker="Sports"
+        title="Fields, courts and a culture of fair play."
+        body="Athletics, cricket, football, basketball and house matches. Coaches treat fitness as part of education."
+      />
+
+      {/* Each sport carries its own photograph. Football, basketball and
+          athletics previously shared one cricket image, which made the page
+          read as filler. */}
+      <SiteSection>
+        <SiteKicker>What we play</SiteKicker>
+        <SiteHeading title="Sport across the school week" />
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {SPORTS_OFFERED.map((sport) => (
+            <article
+              key={sport.name}
+              className="group overflow-hidden rounded-2xl border border-ink-900/10 bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-pop"
+            >
+              <div className="aspect-[4/3] overflow-hidden">
+                <MediaImage
+                  src={sport.img}
+                  alt={sport.name}
+                  position="center 45%"
+                  className="h-full w-full transition-transform duration-700 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                />
+              </div>
+              <div className="p-5">
+                <h3 className="font-display text-xl font-medium text-ink-900">{sport.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{sport.detail}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </SiteSection>
+
+      <SiteSection>
+        <SiteKicker>Recent results</SiteKicker>
+        <SiteHeading title="How our teams have done" />
+        <div className="mt-10 grid gap-8 md:grid-cols-3">
           {AWARDS.map((a) => (
-            <article key={a.title} className="rounded-[24px] bg-white p-6 shadow-card">
-              <h2 className="font-display text-2xl">{a.title}</h2>
+            <article key={a.title} className="border-t border-ink-900/10 pt-5">
+              <h3 className="font-display text-2xl font-medium">{a.title}</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">{a.body}</p>
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-8 max-w-[1280px]">
-          <Link to="/admissions" className="inline-flex rounded-full bg-gilt-600 px-5 py-3 text-sm font-semibold text-[#07131c]">Join a campus</Link>
+        <div className="mt-10">
+          <SiteCta to="/admissions" variant="gilt">
+            Join a campus
+          </SiteCta>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -242,24 +398,29 @@ export function SportsPagePublic() {
 export function EventsPagePublic() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/events.jpg" kicker="Events & news" title="This term, on campus." body="Assessments, PTM, sport and the festive close of term." />
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-5 md:grid-cols-2">
+      <HeroBand image={SITE_MEDIA.eventImage} position="center 40%" kicker="Events & calendar" title="Examinations, meetings and school programmes" body="Key dates for assessments, parent–teacher meetings, sports and holidays across campuses." />
+      <SiteSection tone="white">
+        <div className="grid gap-10 md:grid-cols-2">
           {EVENTS.map((ev) => (
-            <article key={ev.title} className="img-zoom overflow-hidden rounded-[24px] bg-[#f4f1ea] shadow-card">
-              <MediaImage src={ev.img} alt="" className="h-52 w-full object-cover" />
-              <div className="p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gilt-600">{ev.date} {ev.year}</p>
-                <h2 className="mt-2 font-display text-3xl">{ev.title}</h2>
+            <article key={ev.title} className="border border-ink-900/10">
+              <FieldMedia src={ev.img} alt="" frame="event" />
+              <div className="p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-forest-600">
+                  {ev.category} · {ev.date} {ev.year}
+                </p>
+                <h2 className="type-card mt-1.5 font-display font-medium">{ev.title}</h2>
+                <p className="mt-1 text-xs text-slate-500">{ev.location}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{ev.body}</p>
               </div>
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-8 max-w-[1280px]">
-          <Link to="/gallery" className="text-sm font-semibold">Campus photographs →</Link>
+        <div className="mt-10">
+          <SiteCta to="/gallery" variant="ghost">
+            Campus photographs <ArrowRight size={14} />
+          </SiteCta>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -269,27 +430,42 @@ export function GalleryPage() {
   const [tour, setTour] = useState(false);
   return (
     <PublicChrome>
-      <HeroBand image="/assets/campuses/noida.jpg" kicker="Photo / video gallery" title="Campus, classrooms, sport and celebration." body="Licensed stills and a demo campus film. Click any photograph to open it." />
-      <section className="bg-[#f4f1ea] px-5 py-16 lg:px-10">
-        <div className="mx-auto max-w-[1280px] columns-1 gap-4 sm:columns-2 xl:columns-3">
+      <HeroBand
+        image={SITE_MEDIA.galleryNoida}
+        position="center 40%"
+        kicker="Gallery"
+        title="Campus, classrooms, sport and celebration."
+        body="Licensed stills and a demo campus film. Click any photograph to open it."
+      />
+      <SiteSection>
+        <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
           {GALLERY.map((g) => (
-            <button key={g.src + g.label} type="button" className="img-zoom mb-4 block w-full break-inside-avoid overflow-hidden rounded-[22px]" onClick={() => setShot(g)}>
+            <button key={g.src + g.label} type="button" className="mb-4 block w-full break-inside-avoid overflow-hidden" onClick={() => setShot(g)}>
               <span className="relative block">
-                <MediaImage src={g.src} alt={g.label} className={g.span === "tall" ? "h-80 w-full object-cover" : g.span === "wide" ? "h-52 w-full object-cover" : "h-56 w-full object-cover"} />
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#07131c]/85 px-4 py-3 text-left font-display text-lg text-white">{g.label}</span>
+                <FieldMedia
+                  src={g.src}
+                  alt={g.label}
+                  frame={g.span === "tall" ? "portrait" : g.span === "wide" ? "banner" : "gallery"}
+                  className={g.span === "tall" ? "!max-h-72 max-w-none" : g.span === "wide" ? "!max-h-40" : "!max-h-48"}
+                />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-950/80 px-4 py-3 text-left text-sm font-medium text-white">{g.label}</span>
               </span>
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setTour(true)} className="mx-auto mt-8 flex items-center gap-2 rounded-full bg-[#053321] px-5 py-3 text-sm font-semibold text-white">
-          <Play size={14} fill="currentColor" /> Take a Virtual Campus Tour
+        <button
+          type="button"
+          onClick={() => setTour(true)}
+          className="mt-10 inline-flex items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-semibold text-white"
+        >
+          <Play size={14} fill="currentColor" /> Virtual campus tour
         </button>
-      </section>
+      </SiteSection>
       <VirtualTour open={tour} onClose={() => setTour(false)} />
       {shot ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#07131c]/80 p-4 backdrop-blur-md" onClick={() => setShot(null)}>
-          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-[24px]" onClick={(e) => e.stopPropagation()}>
-            <MediaImage src={shot.src} alt={shot.label} className="max-h-[90vh] w-full object-cover" />
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-950/85 p-4" onClick={() => setShot(null)}>
+          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <MediaImage src={shot.src} alt={shot.label} fit="contain" className="max-h-[90vh] w-full" />
             <p className="absolute bottom-4 left-5 font-display text-2xl text-white">{shot.label}</p>
             <button type="button" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/20 text-white" onClick={() => setShot(null)} aria-label="Close photograph">
               <X size={18} />
@@ -304,21 +480,27 @@ export function GalleryPage() {
 export function TransportPagePublic() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/transport.jpg" kicker="Transport" title="Routes that families can actually follow." body="Dedicated buses serve each campus. Live GPS is not connected; the School Portal shows a labelled demo tracker." />
-      <section className="bg-white px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-2">
-          <ul className="grid gap-3 text-sm">
+      <HeroBand
+        image={SITE_MEDIA.transportImage}
+        position={SCHOOL_CROP.bus}
+        kicker="Transport"
+        title="Routes that families can actually follow."
+        body="Dedicated buses serve each campus. Live GPS is not connected; the School Portal shows a labelled demo tracker."
+      />
+      <SiteSection tone="white">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <ul className="grid gap-4 text-sm">
             {["Morning and afternoon shifts", "Attendant on junior routes", "GPS demo inside the parent portal", "Depot at Gurugram and Main Campus"].map((line) => (
-              <li key={line} className="flex items-center gap-2 rounded-2xl bg-[#f4f1ea] px-4 py-3">
-                <CheckCircle2 size={16} className="text-[#0c6b45]" /> {line}
+              <li key={line} className="flex items-center gap-3 border-l-2 border-forest-600 pl-4 py-2">
+                <CheckCircle2 size={16} className="text-forest-600" /> {line}
               </li>
             ))}
           </ul>
-          <Link to="/login" className="inline-flex h-fit items-center gap-2 rounded-full bg-[#053321] px-5 py-3 text-sm font-semibold text-white">
+          <SiteCta to="/login" variant="primary">
             <Bus size={16} /> Open School Portal
-          </Link>
+          </SiteCta>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }
@@ -326,28 +508,38 @@ export function TransportPagePublic() {
 export function ContactPage() {
   return (
     <PublicChrome>
-      <HeroBand image="/assets/sections/admissions.jpg" kicker="Contact" title="Admissions desk and campus offices." body="Demo contact details for this platform. Live offers are issued only through the School Portal." />
-      <section className="bg-[#f4f1ea] px-5 py-16 lg:px-10">
-        <div className="mx-auto grid max-w-[1280px] gap-6 lg:grid-cols-3">
-          <article className="rounded-[24px] bg-white p-6 shadow-card">
-            <MapPin className="text-[#0c6b45]" size={20} />
-            <h2 className="mt-3 font-display text-2xl">Address</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Mathura Road, New Delhi — flagship campus, with seven sister campuses across Delhi-NCR. Demo locations are fictional.</p>
+      <HeroBand
+        image={SITE_MEDIA.admissionsImage}
+        position="center 40%"
+        kicker="Contact"
+        title="Admissions desk and campus offices."
+        body="Demo contact details for this platform. Live offers are issued only through the School Portal."
+      />
+      <SiteSection>
+        <div className="grid gap-10 md:grid-cols-3">
+          <article>
+            <MapPin className="text-forest-600" size={20} strokeWidth={1.6} />
+            <h2 className="mt-4 font-display text-2xl font-medium">Address</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Mathura Road, New Delhi — flagship campus, with seven sister campuses across Delhi-NCR.</p>
           </article>
-          <article className="rounded-[24px] bg-white p-6 shadow-card">
-            <Phone className="text-[#0c6b45]" size={20} />
-            <h2 className="mt-3 font-display text-2xl">Admissions desk</h2>
+          <article>
+            <Phone className="text-forest-600" size={20} strokeWidth={1.6} />
+            <h2 className="mt-4 font-display text-2xl font-medium">Admissions desk</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">011-4300-1000 · Mon–Fri, 8:30–15:30</p>
-            <p className="mt-1 flex items-center gap-2 text-sm text-slate-600"><Clock3 size={14} /> Office hours follow the academic calendar.</p>
+            <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <Clock3 size={14} /> Office hours follow the academic calendar.
+            </p>
           </article>
-          <article className="rounded-[24px] bg-white p-6 shadow-card">
-            <Mail className="text-[#0c6b45]" size={20} />
-            <h2 className="mt-3 font-display text-2xl">Email</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">admissions.demo@dps.local</p>
-            <Link to="/login" className="mt-4 inline-block text-sm font-semibold">School Portal →</Link>
+          <article>
+            <Mail className="text-forest-600" size={20} strokeWidth={1.6} />
+            <h2 className="mt-4 font-display text-2xl font-medium">Email</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">admissions.demo@touchwood.edu.in</p>
+            <Link to="/login" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-700">
+              School Portal <ArrowRight size={14} />
+            </Link>
           </article>
         </div>
-      </section>
+      </SiteSection>
     </PublicChrome>
   );
 }

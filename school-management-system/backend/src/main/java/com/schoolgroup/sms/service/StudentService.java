@@ -120,6 +120,16 @@ public class StudentService {
                 }
             } else if (user.getRole() == Role.STUDENT) {
                 students.findByUserId(user.getId()).ifPresent(own -> predicates.add(cb.equal(root.get("id"), own.getId())));
+            } else if (user.getRole() == Role.TEACHER) {
+                if (resolved != null) {
+                    predicates.add(cb.equal(root.get("branch").get("id"), resolved));
+                }
+                var sectionIds = access.teacherAssignedSectionIds();
+                if (sectionIds.isEmpty()) {
+                    predicates.add(cb.disjunction());
+                } else {
+                    predicates.add(root.get("section").get("id").in(sectionIds));
+                }
             } else if (resolved != null) {
                 predicates.add(cb.equal(root.get("branch").get("id"), resolved));
             }

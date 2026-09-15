@@ -15,6 +15,9 @@ spring:
     locations: classpath:db/migration,classpath:db/testdata
 
 app:
+  security:
+    # The RBAC suite signs in as all 8 roles from one address.
+    login-attempts-per-minute: 200
   jwt:
     secret: test-only-jwt-secret-not-for-production-use-must-be-long-enough-64
   seed:

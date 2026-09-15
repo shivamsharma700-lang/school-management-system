@@ -160,14 +160,18 @@ A frontend “success” flag is never trusted. Set `PAYMENT_SECRET` in the envi
 
 ## Production deployment overview
 
+See **[PILOT-RUNBOOK.md](./PILOT-RUNBOOK.md)** for the controlled real-school pilot checklist.
+
 1. Provision PostgreSQL and a dedicated app role
-2. Set production secrets in the runtime environment, not in git
-3. Build `backend/target/school-management-backend-1.0.0.jar`
-4. Run with `--spring.profiles.active=prod`
-5. Build the frontend (`npm run build`) and serve `frontend/dist` behind TLS
-6. Point `CORS_ORIGINS` at the real UI origin
-7. Put a reverse proxy in front of both apps
+2. Set production secrets in the runtime environment, not in git (`JWT_SECRET`, `PAYMENT_SECRET`, DB credentials, `CORS_ORIGINS`)
+3. Run with `--spring.profiles.active=prod` (never `dev` against pilot data)
+4. Create the first SUPER_ADMIN via one-time bootstrap env vars, then disable bootstrap
+5. Build `backend/target/school-management-backend-1.0.0.jar`
+6. Build the frontend (`npm run build`, `VITE_DEMO_MODE=false`) and serve `frontend/dist` behind TLS
+7. Put a reverse proxy in front of both apps; health check: `GET /api/health`
 8. Configure a real payment provider by replacing the mock HMAC adapter, keeping webhook signature verification
+
+**v1 payment limitation:** payment orders settle the **full outstanding** amount only (no custom partial installments).
 
 ## What is intentionally not included
 

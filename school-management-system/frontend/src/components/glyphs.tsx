@@ -30,8 +30,6 @@ export type GlyphName =
   | "health"
   | "sports"
   | "lab"
-  | "hostel"
-  | "canteen"
   | "inventory";
 
 export type GlyphTone = "brand" | "sidebar" | "light";
@@ -57,25 +55,25 @@ function Shell({ children, gid, tone }: { children: ReactNode; gid: string; tone
         </linearGradient>
         <linearGradient id={`${gid}-rim`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#f4dfa0" stopOpacity={nav ? 0.95 : 0.8} />
-          <stop offset="50%" stopColor="#c5a059" stopOpacity={nav ? 0.75 : 0.5} />
+          <stop offset="50%" stopColor="#F0A500" stopOpacity={nav ? 0.75 : 0.5} />
           <stop offset="100%" stopColor="#7a5a22" stopOpacity={nav ? 0.55 : 0.32} />
         </linearGradient>
         <linearGradient id={`${gid}-forest`} x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#2fd48a" />
-          <stop offset="45%" stopColor="#0f8f58" />
-          <stop offset="100%" stopColor="#053321" />
+          <stop offset="0%" stopColor="#2a9a6e" />
+          <stop offset="45%" stopColor="#3A3A45" />
+          <stop offset="100%" stopColor="#0a3d2c" />
         </linearGradient>
         <linearGradient id={`${gid}-forest-side`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0a5c3a" />
-          <stop offset="100%" stopColor="#03180f" />
+          <stop offset="0%" stopColor="#26262E" />
+          <stop offset="100%" stopColor="#071a14" />
         </linearGradient>
         <linearGradient id={`${gid}-gilt`} x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0%" stopColor="#ffe9b0" />
-          <stop offset="40%" stopColor="#d4af61" />
-          <stop offset="100%" stopColor="#8a6424" />
+          <stop offset="0%" stopColor="#e8d19a" />
+          <stop offset="40%" stopColor="#b8975a" />
+          <stop offset="100%" stopColor="#9A6205" />
         </linearGradient>
         <linearGradient id={`${gid}-gilt-side`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#b8893a" />
+          <stop offset="0%" stopColor="#9A6205" />
           <stop offset="100%" stopColor="#5c4014" />
         </linearGradient>
         <linearGradient id={`${gid}-cream`} x1="0" y1="0" x2="0" y2="1">
@@ -94,7 +92,7 @@ function Shell({ children, gid, tone }: { children: ReactNode; gid: string; tone
           <feDropShadow dx="0" dy={nav ? 3.5 : 3.2} stdDeviation={nav ? 2.8 : 2.4} floodColor="#000000" floodOpacity={nav ? 0.5 : 0.22} />
         </filter>
         <filter id={`${gid}-lift`} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodColor="#04180f" floodOpacity="0.28" />
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodColor="#08080A" floodOpacity="0.28" />
         </filter>
         <radialGradient id={`${gid}-glow`} cx="32%" cy="28%" r="70%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
@@ -157,7 +155,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <Block x={17} y={30} w={9} h={14} face={`url(#${gid}-cream)`} side={`url(#${gid}-forest-side)`} />
       <Block x={28} y={24} w={9} h={20} face={`url(#${gid}-forest)`} side={`url(#${gid}-forest-side)`} />
       <Block x={39} y={18} w={8} h={26} face={`url(#${gid}-gilt)`} side={`url(#${gid}-gilt-side)`} />
-      <rect x={17} y={46} width={30} height={2.5} rx={1.2} fill="#053321" opacity="0.22" />
+      <rect x={17} y={46} width={30} height={2.5} rx={1.2} fill="#111114" opacity="0.22" />
     </>
   ),
   campus: (gid) => (
@@ -189,8 +187,8 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <rect x="15" y="20" width="34" height="9" rx="5" fill={`url(#${gid}-forest)`} />
       <rect x="15" y="25" width="34" height="4" fill={`url(#${gid}-forest)`} />
       <circle cx="24" cy="36" r="2.2" fill={`url(#${gid}-gilt)`} />
-      <circle cx="32" cy="36" r="2.2" fill="#053321" opacity="0.28" />
-      <circle cx="40" cy="36" r="2.2" fill="#053321" opacity="0.28" />
+      <circle cx="32" cy="36" r="2.2" fill="#111114" opacity="0.28" />
+      <circle cx="40" cy="36" r="2.2" fill="#111114" opacity="0.28" />
       <rect x="21" y="15" width="3.5" height="9" rx="1.7" fill={`url(#${gid}-gilt)`} />
       <rect x="39" y="15" width="3.5" height="9" rx="1.7" fill={`url(#${gid}-gilt)`} />
     </>
@@ -211,7 +209,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
     <>
       <rect x="19" y="18" width="24" height="28" rx="3.5" fill={`url(#${gid}-forest-side)`} />
       <rect x="19" y="16" width="24" height="28" rx="3.5" fill={`url(#${gid}-cream)`} />
-      <path d="M24 24h14M24 30h14M24 36h10" stroke="#053321" strokeWidth="2.1" strokeLinecap="round" opacity="0.4" />
+      <path d="M24 24h14M24 30h14M24 36h10" stroke="#111114" strokeWidth="2.1" strokeLinecap="round" opacity="0.4" />
       <circle cx="42" cy="40" r="8" fill={`url(#${gid}-forest-side)`} />
       <circle cx="42" cy="38.5" r="8" fill={`url(#${gid}-forest)`} />
       <path d="M38.5 38.5l2.4 2.4 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -240,7 +238,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <path d="M19 16h17l11 11v21a3.5 3.5 0 01-3.5 3.5H19A3.5 3.5 0 0115.5 48V19.5A3.5 3.5 0 0119 16z" fill={`url(#${gid}-forest-side)`} />
       <path d="M19 14h17l11 11v21a3.5 3.5 0 01-3.5 3.5H19A3.5 3.5 0 0115.5 46V17.5A3.5 3.5 0 0119 14z" fill={`url(#${gid}-cream)`} />
       <path d="M36 14v11h11" fill={`url(#${gid}-gilt)`} />
-      <path d="M23 32h16M23 38h12" stroke="#053321" strokeWidth="2.1" strokeLinecap="round" opacity="0.35" />
+      <path d="M23 32h16M23 38h12" stroke="#111114" strokeWidth="2.1" strokeLinecap="round" opacity="0.35" />
     </>
   ),
   exam: (gid) => (
@@ -290,7 +288,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
     <>
       <rect x="11" y="26" width="42" height="20" rx="3.5" fill={`url(#${gid}-forest-side)`} />
       <rect x="11" y="24" width="42" height="20" rx="3.5" fill={`url(#${gid}-cream)`} />
-      <rect x="14" y="27" width="36" height="12" rx="2" fill="#053321" opacity="0.78" />
+      <rect x="14" y="27" width="36" height="12" rx="2" fill="#111114" opacity="0.78" />
       <path d="M16 29h32" stroke="#2fd48a" strokeOpacity="0.35" strokeWidth="1.5" />
       <rect x="26" y="42" width="12" height="6" fill={`url(#${gid}-gilt)`} />
       <rect x="19" y="17" width="26" height="5" rx="2.5" fill={`url(#${gid}-forest)`} />
@@ -310,7 +308,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
     <>
       <rect x="13" y="18" width="38" height="30" rx="5" fill={`url(#${gid}-forest-side)`} />
       <rect x="13" y="16" width="38" height="30" rx="5" fill={`url(#${gid}-cream)`} />
-      <path d="M13 24h38M26 16v30M38 16v30" stroke="#053321" strokeWidth="1.7" opacity="0.22" />
+      <path d="M13 24h38M26 16v30M38 16v30" stroke="#111114" strokeWidth="1.7" opacity="0.22" />
       <rect x="16" y="27" width="8" height="5.5" rx="1.2" fill={`url(#${gid}-forest)`} />
       <rect x="28" y="33" width="8" height="5.5" rx="1.2" fill={`url(#${gid}-gilt)`} />
     </>
@@ -319,7 +317,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
     <>
       <rect x="15" y="16" width="30" height="34" rx="5" fill={`url(#${gid}-forest-side)`} />
       <rect x="15" y="14" width="30" height="34" rx="5" fill={`url(#${gid}-cream)`} />
-      <path d="M22 24h16M22 30h16M22 36h12" stroke="#053321" strokeWidth="2.1" strokeLinecap="round" opacity="0.32" />
+      <path d="M22 24h16M22 30h16M22 36h12" stroke="#111114" strokeWidth="2.1" strokeLinecap="round" opacity="0.32" />
       <path d="M40 38l7 2.2-2.2 7-7-2.2z" fill={`url(#${gid}-gilt-side)`} />
       <path d="M40 36.5l7 2.2-2.2 7-7-2.2z" fill={`url(#${gid}-gilt)`} />
     </>
@@ -351,7 +349,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <Block x={13} y={18} w={10} h={26} face={`url(#${gid}-forest)`} side={`url(#${gid}-forest-side)`} depth={2.5} />
       <Block x={26} y={14} w={10} h={30} face={`url(#${gid}-gilt)`} side={`url(#${gid}-gilt-side)`} depth={2.5} />
       <Block x={39} y={20} w={10} h={24} face={`url(#${gid}-cream)`} side={`url(#${gid}-forest-side)`} depth={2.5} />
-      <rect x="13" y="46" width="36" height={3} rx={1.5} fill="#053321" opacity="0.2" />
+      <rect x="13" y="46" width="36" height={3} rx={1.5} fill="#111114" opacity="0.2" />
     </>
   ),
   bus: (gid) => (
@@ -410,7 +408,7 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <circle cx="32" cy="32" r="15" fill={`url(#${gid}-forest-side)`} />
       <circle cx="32" cy="30" r="15" fill={`url(#${gid}-cream)`} />
       <circle cx="32" cy="30" r="15" fill="none" stroke={`url(#${gid}-forest)`} strokeWidth="2.2" />
-      <path d="M17 30h30M32 15c-6.5 5.5-9.5 10-9.5 15s3 9.5 9.5 15c6.5-5.5 9.5-10 9.5-15s-3-9.5-9.5-15z" stroke="#053321" strokeWidth="1.7" opacity="0.3" />
+      <path d="M17 30h30M32 15c-6.5 5.5-9.5 10-9.5 15s3 9.5 9.5 15c6.5-5.5 9.5-10 9.5-15s-3-9.5-9.5-15z" stroke="#111114" strokeWidth="1.7" opacity="0.3" />
       <path d="M21 20l22 20M43 20L21 40" stroke={`url(#${gid}-gilt)`} strokeWidth="2" />
     </>
   ),
@@ -421,28 +419,6 @@ const MARKS: Record<GlyphName, (gid: string) => ReactNode> = {
       <path d="M21 44h22" stroke={`url(#${gid}-gilt)`} strokeWidth="5.5" strokeLinecap="round" />
       <circle cx="28" cy="38" r="2" fill={`url(#${gid}-sky)`} />
       <circle cx="36" cy="34" r="1.6" fill={`url(#${gid}-gilt)`} />
-    </>
-  ),
-  hostel: (gid) => (
-    <>
-      <rect x="13" y="28" width="38" height="20" rx="2.5" fill={`url(#${gid}-forest-side)`} />
-      <rect x="13" y="26" width="38" height="20" rx="2.5" fill={`url(#${gid}-cream)`} />
-      <path d="M11 28l21-14 21 14" fill={`url(#${gid}-forest-side)`} />
-      <path d="M11 26l21-14 21 14" fill={`url(#${gid}-forest)`} />
-      <rect x="20" y="32" width="8" height="8" rx="1.5" fill={`url(#${gid}-gilt)`} />
-      <rect x="36" y="32" width="8" height="8" rx="1.5" fill={`url(#${gid}-gilt)`} />
-    </>
-  ),
-  canteen: (gid) => (
-    <>
-      <ellipse cx="32" cy="42" rx="19" ry="8.5" fill={`url(#${gid}-forest-side)`} />
-      <ellipse cx="32" cy="40" rx="19" ry="8.5" fill={`url(#${gid}-cream)`} />
-      <ellipse cx="32" cy="38" rx="14.5" ry="5.8" fill="#fff" opacity="0.5" />
-      <path d="M17 24c3.5 11 26.5 11 30 0" stroke={`url(#${gid}-gilt-side)`} strokeWidth="3.6" strokeLinecap="round" fill="none" />
-      <path d="M17 22.5c3.5 11 26.5 11 30 0" stroke={`url(#${gid}-gilt)`} strokeWidth="3.2" strokeLinecap="round" fill="none" />
-      <rect x="29" y="13" width="6" height="13" rx="2.5" fill={`url(#${gid}-forest)`} />
-      <circle cx="24" cy="36" r="2.4" fill={`url(#${gid}-forest)`} />
-      <circle cx="40" cy="36" r="2.4" fill={`url(#${gid}-gilt)`} />
     </>
   ),
   inventory: (gid) => (
@@ -505,8 +481,6 @@ const PATH_GLYPHS: Array<{ test: RegExp; name: GlyphName }> = [
   { test: /sport/, name: "sports" },
   { test: /lab/, name: "lab" },
   { test: /class/, name: "class" },
-  { test: /hostel/, name: "hostel" },
-  { test: /canteen|cafeteria|menu|dining/, name: "canteen" },
   { test: /discipline/, name: "admissions" },
   { test: /inventory/, name: "inventory" },
   { test: /document/, name: "document" },

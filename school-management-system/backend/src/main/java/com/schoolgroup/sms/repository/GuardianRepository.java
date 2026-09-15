@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface GuardianRepository extends JpaRepository<Guardian, UUID>, JpaSpecificationExecutor<Guardian> {
 
     Optional<Guardian> findByUserId(UUID userId);
+
+    Optional<Guardian> findFirstByMobile(String mobile);
 }

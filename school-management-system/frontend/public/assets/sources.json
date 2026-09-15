@@ -1,0 +1,128 @@
+{
+  "policy": {
+    "summary": "Local redistributed assets only. Official DPS websites used as visual/quality references — their media is NOT scraped or hotlinked.",
+    "preferred_licenses": ["Unsplash License", "Pexels License"],
+    "forbidden": [
+      "Hotlinking copyrighted school websites",
+      "Watermarked stock",
+      "AI-generated faces/architecture as primary photography",
+      "Western university stock used as Indian school campus"
+    ]
+  },
+  "references_not_redistributed": [
+    {
+      "name": "Delhi Public School family sites",
+      "urls": ["https://dpsfamily.org/", "https://www.dpsbulandshahr.com/"],
+      "role": "Visual identity reference only — campus, uniform, pastoral tone",
+      "permission": "not_reused"
+    }
+  ],
+  "assets": [
+    {
+      "path": "/assets/school/campus/hero.jpg",
+      "source": "Unsplash",
+      "photoId": "1709290749293-c6152a187b14",
+      "license": "Unsplash License",
+      "use": "Home hero — Indian classroom with teacher & students",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/campus/wide.jpg",
+      "source": "Unsplash",
+      "photoId": "1719159381962-4170890ada4e",
+      "license": "Unsplash License",
+      "use": "Campus / dashboard — Indian smart classroom",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/campus/entrance.jpg",
+      "source": "Unsplash",
+      "photoId": "1650192139655-77eb926ec6fa",
+      "license": "Unsplash License",
+      "use": "Campus entrance / interior",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/campus/dusk.jpg",
+      "source": "Unsplash",
+      "photoId": "1572847748080-bac263fae977",
+      "license": "Unsplash License",
+      "use": "Student uniform / campus mood",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/students/classroom.jpg",
+      "source": "Unsplash",
+      "photoId": "1709290749293-c6152a187b14",
+      "license": "Unsplash License",
+      "use": "Academics / classroom",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/students/group.jpg",
+      "source": "Unsplash",
+      "photoId": "1573894998033-c0cef4ed722b",
+      "license": "Unsplash License",
+      "use": "About / dashboard promo — Indian schoolgirls",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/library/reading.jpg",
+      "source": "Unsplash",
+      "photoId": "1521587760476-6c12a4b040da",
+      "license": "Unsplash License",
+      "use": "Library",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/science-lab/bench.jpg",
+      "source": "Unsplash",
+      "photoId": "1532094349884-543bc11b234d",
+      "license": "Unsplash License",
+      "use": "Science laboratory",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/sports/field.jpg",
+      "source": "Unsplash",
+      "photoId": "1531415074968-036ba1b575da",
+      "license": "Unsplash License",
+      "use": "Sports — cricket (India-relevant)",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/transport/bus.jpg",
+      "source": "Unsplash",
+      "photoId": "1544620347-c4fd4a3d5957",
+      "license": "Unsplash License",
+      "use": "Transport / school bus",
+      "permission": "licensed_free"
+    },
+    {
+      "path": "/assets/school/dashboard/promo.jpg",
+      "source": "Unsplash",
+      "photoId": "1573894998033-c0cef4ed722b",
+      "license": "Unsplash License",
+      "use": "Dashboard Education beyond classrooms card",
+      "permission": "licensed_free",
+      "crop": "object-cover + center 28% in 4:5 frame"
+    },
+    {
+      "path": "/assets/school/dashboard/hero.jpg",
+      "source": "Unsplash",
+      "photoId": "1719159381962-4170890ada4e",
+      "license": "Unsplash License",
+      "use": "Dashboard welcome band (smart classroom landscape)",
+      "permission": "licensed_free",
+      "crop": "object-cover + center 40%"
+    },
+    {
+      "path": "/assets/videos/campus-hero.mp4",
+      "source": "Local / previously licensed stock",
+      "license": "verify_before_redistribution",
+      "use": "Optional tour film — photograph strip preferred when weak",
+      "permission": "use_with_caution"
+    }
+  ],
+  "updated": "2026-09-08"
+}

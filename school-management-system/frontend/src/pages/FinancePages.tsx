@@ -241,19 +241,41 @@ export function PaymentsPage() {
     enabled: Boolean(selected),
     queryFn: () => api<Invoice[]>(`/api/invoices?studentId=${selected}`),
   });
+  const payments = useQuery({
+    queryKey: ["payments", selected],
+    enabled: Boolean(selected),
+    queryFn: () => api<Array<{ id: string; amount: number | string; method: string; status: string; createdAt: string; invoiceId: string }>>(
+      `/api/payments?studentId=${selected}`
+    ),
+  });
+  const qc = useQueryClient();
   const pay = useMutation({
     mutationFn: (invoiceId: string) => post("/api/payments/orders", { invoiceId, method: user?.role === "ACCOUNTANT" ? "CASH" : "GATEWAY", idempotencyKey: crypto.randomUUID() }),
-    onSuccess: () => toast.success("Payment order recorded. Settlement still depends on webhook or offline confirmation."),
+    onSuccess: () => {
+      toast.success("Payment order recorded. Settlement still depends on webhook or offline confirmation.");
+      void qc.invalidateQueries({ queryKey: ["payments", selected] });
+      void qc.invalidateQueries({ queryKey: ["invoices", selected] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const confirm = useMutation({
+    mutationFn: (paymentId: string) => post(`/api/payments/${paymentId}/confirm-offline`),
+    onSuccess: () => {
+      toast.success("Offline payment confirmed — receipt issued");
+      void qc.invalidateQueries({ queryKey: ["payments", selected] });
+      void qc.invalidateQueries({ queryKey: ["invoices", selected] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <div>
-      <PageHeader crumbs={["Finance"]} title="Payments" subtitle="There is no card vault in this product. Orders are created here; receipts appear only after confirmation." />
+      <PageHeader crumbs={["Finance"]} title="Payments" subtitle="Create orders and review the live payment ledger for the selected student." />
       <div className="mb-4 max-w-sm">
         <Select value={selected} onChange={(e) => setStudentId(e.target.value)}>
           {(students.data?.items ?? []).map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
         </Select>
       </div>
+      <h2 className="mb-3 font-display text-xl">Payable invoices</h2>
       {(invoices.data ?? []).length === 0 ? (
         <EmptyState title="No payable invoices" body="Pick a student with invoices to record a payment order." />
       ) : (
@@ -265,6 +287,26 @@ export function PaymentsPage() {
               <td className="px-4 py-3"><Badge tone={invoiceTone(inv.status)}>{inv.status}</Badge></td>
               <td className="px-4 py-3 text-right">
                 {inv.status !== "PAID" ? <Button size="sm" onClick={() => pay.mutate(inv.id)}>Create order</Button> : str(inv.status)}
+              </td>
+            </tr>
+          ))}
+        </TableShell>
+      )}
+      <h2 className="mb-3 mt-8 font-display text-xl">Payment ledger</h2>
+      {payments.isLoading ? <Skeleton className="h-40" /> : (payments.data ?? []).length === 0 ? (
+        <EmptyState title="No payments yet" body="Orders and confirmations for this student will appear here." />
+      ) : (
+        <TableShell columns={["When", "Amount", "Method", "Status", ""]}>
+          {(payments.data ?? []).map((p) => (
+            <tr key={p.id}>
+              <td className="px-4 py-3">{formatDate(p.createdAt)}</td>
+              <td className="px-4 py-3">{formatMoney(p.amount)}</td>
+              <td className="px-4 py-3">{p.method}</td>
+              <td className="px-4 py-3"><Badge tone={statusTone(p.status)}>{p.status}</Badge></td>
+              <td className="px-4 py-3 text-right">
+                {canFinance(user?.role) && p.status !== "SUCCESS" ? (
+                  <Button size="sm" variant="secondary" onClick={() => confirm.mutate(p.id)}>Confirm offline</Button>
+                ) : null}
               </td>
             </tr>
           ))}

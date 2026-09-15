@@ -19,13 +19,16 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final LoginRateLimitFilter loginRateLimitFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final RestAuthEntryPoint restAuthEntryPoint;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           LoginRateLimitFilter loginRateLimitFilter,
-                          CorsConfigurationSource corsConfigurationSource) {
+                          CorsConfigurationSource corsConfigurationSource,
+                          RestAuthEntryPoint restAuthEntryPoint) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.loginRateLimitFilter = loginRateLimitFilter;
         this.corsConfigurationSource = corsConfigurationSource;
+        this.restAuthEntryPoint = restAuthEntryPoint;
     }
 
     @Bean
@@ -35,12 +38,19 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/forgot-password",
-                                "/api/auth/reset-password", "/api/payments/webhook").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
+                                "/api/auth/forgot-password", "/api/auth/reset-password", "/api/payments/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/public/admissions/enquiries").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )
+                .exceptionHandling(ex -> ex
+                        // 401 for missing/expired credentials, 403 only for a real
+                        // permission failure — the client refresh flow depends on it.
+                        .authenticationEntryPoint(restAuthEntryPoint)
+                        .accessDeniedHandler(restAuthEntryPoint))
                 .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

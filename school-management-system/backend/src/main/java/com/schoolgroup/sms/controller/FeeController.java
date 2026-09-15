@@ -6,6 +6,7 @@ import com.schoolgroup.sms.entity.Invoice;
 import com.schoolgroup.sms.service.FeePaymentService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +31,7 @@ public class FeeController {
     }
 
     @GetMapping("/fee-structures")
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> structures(@RequestParam(required = false) UUID branchId) {
         return fees.listStructures(branchId).stream()
                 .map(FeeController::toStructure)
@@ -54,8 +56,23 @@ public class FeeController {
     }
 
     @GetMapping("/invoices")
-    public List<Map<String, Object>> invoices(@RequestParam UUID studentId) {
-        return fees.invoicesForStudent(studentId).stream().map(FeeController::toInvoice).toList();
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> invoices(@RequestParam(required = false) UUID studentId,
+                                              @RequestParam(required = false) String status,
+                                              @RequestParam(required = false) UUID branchId) {
+        if (studentId != null) {
+            return fees.invoicesForStudent(studentId).stream().map(FeeController::toInvoice).toList();
+        }
+        if ("PENDING".equalsIgnoreCase(status) || "DEFAULTERS".equalsIgnoreCase(status)) {
+            return fees.pendingInvoices(branchId).stream().map(FeeController::toInvoice).toList();
+        }
+        return fees.pendingInvoices(branchId).stream().map(FeeController::toInvoice).toList();
+    }
+
+    @GetMapping("/payments")
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> payments(@RequestParam UUID studentId) {
+        return fees.paymentsForStudent(studentId).stream().map(FeeController::toPayment).toList();
     }
 
     @PostMapping("/payments/orders")
@@ -78,6 +95,13 @@ public class FeeController {
         return Map.of("receiptNumber", receipt.getReceiptNumber(), "issuedAt", receipt.getIssuedAt().toString());
     }
 
+    @GetMapping("/receipts")
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> receipts(@RequestParam(required = false) UUID studentId,
+                                              @RequestParam(required = false) UUID branchId) {
+        return fees.listReceipts(studentId, branchId).stream().map(FeeController::toReceipt).toList();
+    }
+
     private static Map<String, Object> toStructure(FeeStructure fs) {
         return Map.of(
                 "id", fs.getId(),
@@ -94,10 +118,39 @@ public class FeeController {
                 "id", invoice.getId(),
                 "invoiceNumber", invoice.getInvoiceNumber(),
                 "studentId", invoice.getStudent().getId(),
+                "studentName", invoice.getStudent().getFullName(),
                 "totalAmount", invoice.getTotalAmount(),
                 "paidAmount", invoice.getPaidAmount(),
                 "status", invoice.getStatus(),
                 "dueDate", invoice.getDueDate().toString()
+        );
+    }
+
+    private static Map<String, Object> toPayment(com.schoolgroup.sms.entity.Payment payment) {
+        return Map.of(
+                "id", payment.getId(),
+                "invoiceId", payment.getInvoice().getId(),
+                "studentId", payment.getStudent().getId(),
+                "amount", payment.getAmount(),
+                "method", payment.getMethod(),
+                "status", payment.getStatus(),
+                "createdAt", payment.getCreatedAt().toString()
+        );
+    }
+
+    private static Map<String, Object> toReceipt(com.schoolgroup.sms.entity.Receipt receipt) {
+        var payment = receipt.getPayment();
+        return Map.of(
+                "id", receipt.getId(),
+                "receiptNumber", receipt.getReceiptNumber(),
+                "issuedAt", receipt.getIssuedAt().toString(),
+                "paymentId", payment.getId(),
+                "invoiceId", payment.getInvoice().getId(),
+                "invoiceNumber", payment.getInvoice().getInvoiceNumber(),
+                "studentId", payment.getStudent().getId(),
+                "studentName", payment.getStudent().getFullName(),
+                "amount", payment.getAmount(),
+                "method", payment.getMethod()
         );
     }
 }

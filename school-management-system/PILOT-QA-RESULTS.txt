@@ -1,0 +1,103 @@
+﻿=== PILOT QA START 2026-09-10T18:35:51.3354366+05:30 ===
+PASS|login|all 6 roles
+PASS|refresh|rotated
+PASS|refresh_reuse|rejected as expected
+PASS|logout_revoke|refresh rejected after logout
+PASS|logout_all|status=204
+PASS|logout_all_revoke|refresh rejected
+PASS|admin_GET /api/dashboard|status=200
+PASS|admin_GET /api/students?size=5|status=200
+PASS|admin_GET /api/guardians?size=5|status=200
+PASS|admin_GET /api/classes|status=200
+FAIL|admin_GET /api/sections|status=500 The remote server returned an error: (500) Internal Server Error. body={"timestamp":"2026-09-10T13:05:53.709340500Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred","path":"/api/sections"}
+PASS|admin_GET /api/subjects|status=200
+FAIL|admin_GET /api/timetable|status=400 The remote server returned an error: (400) Bad Request. body={"timestamp":"2026-09-10T13:05:53.852404600Z","status":400,"error":"Bad Request","message":"Invalid request parameters","path":"/api/timetable"}
+PASS|admin_GET /api/homework|status=200
+PASS|admin_GET /api/exams|status=200
+PASS|admin_GET /api/fee-structures|status=200
+PASS|admin_GET /api/invoices?status=PENDING|status=200
+PASS|admin_GET /api/staff|status=200
+PASS|admin_GET /api/payroll|status=200
+FAIL|admin_GET /api/library/books|status=500 The remote server returned an error: (500) Internal Server Error. body={"timestamp":"2026-09-10T13:05:54.516000800Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred","path":"/api/library/books"}
+PASS|admin_GET /api/transport/routes|status=200
+PASS|admin_GET /api/inventory|status=200
+PASS|admin_GET /api/events|status=200
+PASS|admin_GET /api/notices|status=200
+PASS|admin_GET /api/reports/summary|status=200
+PASS|admin_GET /api/users|status=200
+PASS|admin_GET /api/settings|status=200
+PASS|admin_GET /api/audit-logs|status=200
+PASS|admin_GET /api/admissions/enquiries|status=200
+PASS|admin_GET /api/campus-records?type=HEALTH|status=200
+PASS|admin_GET /api/campus-records?type=DISCIPLINE|status=200
+INFO|arjun_id=c13f2ca4-75b7-4a6f-81aa-5a44872ed155 name=Arjun Sharma class=Class 5 section=A
+PASS|admin_student360|status=200
+INFO|360 guardians=1 attendance%=100.0 health=0 discipline=0 transport=1
+INFO|outsider_id=a8421465-1a69-4f21-bdf3-b4e5eb8898b4
+PASS|principal_dashboard|status=200
+PASS|principal_students|status=200
+PASS|principal_payroll_GET|status=200
+PASS|principal_settings|status=200
+PASS|principal_users_403|status=403
+PASS|principal_audit_403|status=403
+PASS|teacher_students|status=200
+INFO|teacher_visible_students=43
+PASS|teacher_unassigned_student_403|status=403
+PASS|teacher_fees_403|status=403
+PASS|teacher_payroll_403|status=403
+PASS|teacher_settings_403|status=403
+PASS|teacher_users_403|status=403
+INFO|examId=7012d813-45db-4e39-b224-709b4c920551
+PASS|teacher_list_marks|status=200
+INFO|exams_sample=[{"id":"7012d813-45db-4e39-b224-709b4c920551","name":"Term 1 Assessment","examType":"TERM","startDate":"2025-09-10","endDate":"2025-09-20","status":"SCHEDULED","academicYearId":"048685f4-b3ce-45ae-94bf-e9f86937daa2","academicYear":"2025-26","branchId":"856f7fd3-a744-4178-92c9-ff82b43620f9"},{"id":"fa6605be-5cb7-4d7a-8e7a-293eafd3bbb1","name":"Demo Mid-Term 2025-26","examType":"TERM","startDate":"2
+PASS|acct_fee_structures|status=200
+PASS|acct_invoices|status=200
+PASS|acct_pending|status=200
+PASS|acct_reports|status=200
+PASS|acct_marks_403|status=403
+PASS|acct_users_403|status=403
+INFO|feeStructure=de2ee3d6-4ad4-46a8-afb6-a0c8d6c479c9 name=Grade 5 Term 1
+PASS|acct_create_invoice|status=200
+INFO|invoice=INV-1789045556392 total=44500.00 paid=0 status=PENDING
+PASS|acct_payment_order|status=200
+INFO|paymentOrder amount=44500.00 status=CREATED id=fb935381-99bf-4c7b-a0ae-b55210219deb
+PASS|acct_confirm_offline|status=200
+INFO|after_pay status=PAID paid=44500.00 total=44500.00
+PASS|finance_full_payment_reconcile
+PASS|acct_payment_ledger|status=200
+PASS|acct_receipts|status=200
+INFO|finance_partial_custom_amount|NOT_SUPPORTED (orders always charge full outstanding) â€” P1
+PASS|payment_idempotency
+PASS|parent_children|status=200
+INFO|parent_children=3 names=Arjun Sharma,Ananya Sharma,Test Kid
+PASS|parent_linked_scope_reasonable
+PASS|parent_outsider_403|status=403
+PASS|parent_outsider_workspace_403|status=403
+PASS|parent_student360|status=200
+FAIL|parent_360_contains_demo_hint
+INFO|parent360 guardians=1 att%=100.0 hw=1 fees=2
+PASS|parent_settings_403|status=403
+PASS|parent_payroll_403|status=403
+PASS|parent_fee_structures_403|status=403
+PASS|student_list|status=200
+PASS|student_self_only_list
+PASS|student_outsider_403|status=403
+PASS|student_workspace|status=200
+PASS|student_settings_403|status=403
+PASS|student_payroll_403|status=403
+PASS|teacher_attendance_mark|status=409
+PASS|attendance_summary|status=200
+INFO|att_summary present=7 total=7 pct=100.00 today=PRESENT history=7
+INFO|report_card_status=200 body={"percentage":0,"examStatus":"SCHEDULED","max":0,"total":0,"subjects":0,"student":"Arjun Sharma","grade":"NA"}
+INFO|marks_list=[{"id":"0ddb42d5-8b01-4c67-bfbc-b770bcb14c13","exam":"Demo Mid-Term 2025-26","subject":"Mathematics","marksObtained":72.00,"maxMarks":100.00,"grade":"B"},{"id":"0118742f-d270-4411-90b7-7d08b1e7f10f","exam":"Demo Mid-Term 2025-26","subject":"English","marksObtained":72.00,"maxMarks":100.00,"grade":"B
+INFO|exam_subjects_endpoint=200 [{"id":"bf94f1cf-c1eb-4109-80ad-87aa7d93fc93","examId":"7012d813-45db-4e39-b224-709b4c920551","subject":"Mathematics","className":"Class 5","maxMarks":100.00,"passingMarks":35.00,"examDate":"2025-09-1
+PASS|admin_update_student|status=200
+PASS|persistence_student_mobile
+FAIL|create_health_record|status=500 The remote server returned an error: (500) Internal Server Error. body={"timestamp":"2026-09-10T13:05:57.454151700Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred","path":"/api/campus-records"}
+FAIL|create_discipline_record|status=500 The remote server returned an error: (500) Internal Server Error. body={"timestamp":"2026-09-10T13:05:57.463324500Z","status":500,"error":"Internal Server Error","message":"An unexpected error occurred","path":"/api/campus-records"}
+FAIL|360_health_live|count=0
+FAIL|360_discipline_live|count=0
+PASS|360_guardians_live
+INFO|publish_exam status=200 {"name":"Term 1 Assessment","id":"7012d813-45db-4e39-b224-709b4c920551","status":"PUBLISHED"}
+PASS|teacher_other_staff_403|status=403
+=== PILOT QA END ===

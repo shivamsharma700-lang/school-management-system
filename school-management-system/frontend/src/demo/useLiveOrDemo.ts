@@ -12,18 +12,19 @@ function isEmptyValue(data: unknown) {
 }
 
 /**
- * Prefer live API data. Demo data is used only when DEMO_MODE is on AND
- * the API is empty or failed. Real records are never overwritten.
- * DEMO DATA ONLY — REMOVE/REPLACE WHEN REAL API IS AVAILABLE
+ * Prefer live API data.
+ * Demo fixtures are used ONLY when VITE_DEMO_MODE=true AND the request finished
+ * with an error or empty payload. Production never substitutes fake records.
  */
 export function useLiveOrDemo<T>(query: UseQueryResult<T>, demo: T) {
   const vacant = isEmptyValue(query.data);
-  const useDemo = DEMO_MODE && !query.isFetching && !query.isLoading && (query.isError || vacant);
+  const settled = !query.isFetching && !query.isLoading;
+  const useDemo = DEMO_MODE && settled && (query.isError || vacant);
   return {
     data: useDemo ? demo : query.data,
     isDemo: useDemo,
     isLoading: query.isLoading,
-    isError: query.isError && !DEMO_MODE,
+    isError: query.isError && !useDemo,
     refetch: query.refetch,
   };
 }

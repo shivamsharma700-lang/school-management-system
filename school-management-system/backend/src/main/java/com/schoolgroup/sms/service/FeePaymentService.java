@@ -100,6 +100,7 @@ public class FeePaymentService {
     }
 
     public List<FeeStructure> listStructures(UUID branchId) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT);
         UUID resolved = access.resolveBranch(branchId);
         return structures.findAll().stream()
                 .filter(s -> resolved == null || s.getBranch().getId().equals(resolved))
@@ -257,6 +258,41 @@ public class FeePaymentService {
     public List<Invoice> invoicesForStudent(UUID studentId) {
         access.requireStudentAccess(studentId);
         return invoices.findByStudentIdOrderByIssueDateDesc(studentId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Payment> paymentsForStudent(UUID studentId) {
+        access.requireStudentAccess(studentId);
+        return payments.findByStudentIdOrderByCreatedAtDesc(studentId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Receipt> listReceipts(UUID studentId, UUID branchId) {
+        if (studentId != null) {
+            access.requireStudentAccess(studentId);
+            return receipts.findByPaymentStudentIdOrderByIssuedAtDesc(studentId);
+        }
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT);
+        UUID resolved = access.resolveBranch(branchId);
+        if (resolved != null) {
+            return receipts.findByPaymentBranchIdOrderByIssuedAtDesc(resolved);
+        }
+        if (access.current().getRole() != Role.SUPER_ADMIN) {
+            return receipts.findByPaymentBranchIdOrderByIssuedAtDesc(access.requireBranch());
+        }
+        return receipts.findAllByOrderByIssuedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Invoice> pendingInvoices(UUID branchId) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT);
+        UUID resolved = access.resolveBranch(branchId);
+        return invoices.findAll().stream()
+                .filter(i -> "PENDING".equals(i.getStatus()) || "PARTIAL".equals(i.getStatus()) || "OVERDUE".equals(i.getStatus()))
+                .filter(i -> resolved == null || i.getBranch().getId().equals(resolved))
+                .sorted((a, b) -> b.getDueDate().compareTo(a.getDueDate()))
+                .limit(200)
+                .toList();
     }
 
     private Receipt markSuccess(Payment payment, String gatewayPaymentId) {

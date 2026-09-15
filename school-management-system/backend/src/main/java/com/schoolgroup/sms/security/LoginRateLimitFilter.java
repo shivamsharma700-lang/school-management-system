@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,13 +19,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
-    private static final int LIMIT = 10;
     private static final long WINDOW_MS = 60_000;
+    /**
+     * Attempts per client IP per minute. Configurable so the RBAC suite — which
+     * legitimately signs in as every role from one address — is not throttled.
+     */
+    private final int limit;
     private final Map<String, Window> attempts = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
 
-    public LoginRateLimitFilter(ObjectMapper objectMapper) {
+    public LoginRateLimitFilter(ObjectMapper objectMapper,
+                                @Value("${app.security.login-attempts-per-minute:10}") int limit) {
         this.objectMapper = objectMapper;
+        this.limit = limit;
     }
 
     @Override
@@ -40,7 +47,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
                 existing.count++;
                 return existing;
             });
-            if (window.count > LIMIT) {
+            if (window.count > limit) {
                 response.setStatus(429);
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                 objectMapper.writeValue(response.getOutputStream(),

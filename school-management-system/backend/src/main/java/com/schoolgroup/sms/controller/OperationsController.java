@@ -50,6 +50,34 @@ public class OperationsController {
         return operations.attendanceSummary(studentId, from, to);
     }
 
+    @GetMapping("/attendance/report")
+    public Map<String, Object> attendanceReport(@RequestParam UUID sectionId,
+                                                @RequestParam(required = false) LocalDate date,
+                                                @RequestParam(required = false) String session) {
+        return operations.attendanceReport(sectionId, date, session);
+    }
+
+    @GetMapping("/staff-attendance")
+    public List<Map<String, Object>> staffAttendance(@RequestParam(required = false) LocalDate date) {
+        return operations.listStaffAttendance(date);
+    }
+
+    @GetMapping("/staff-attendance/summary")
+    public Map<String, Object> staffAttendanceSummary(@RequestParam(required = false) LocalDate from,
+                                                      @RequestParam(required = false) LocalDate to,
+                                                      @RequestParam(required = false) UUID staffId) {
+        return operations.staffAttendanceSummary(from, to, staffId);
+    }
+
+    @PostMapping("/staff-attendance")
+    public Map<String, String> submitStaffAttendance(@RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> entries = (List<Map<String, Object>>) body.getOrDefault("entries", List.of());
+        LocalDate date = body.get("date") == null ? LocalDate.now() : LocalDate.parse(String.valueOf(body.get("date")));
+        operations.submitStaffAttendance(entries, date);
+        return Map.of("status", "saved");
+    }
+
     @PostMapping("/timetable")
     public TimetableSlot createSlot(@Valid @RequestBody SchoolDtos.TimetableRequest request) {
         return operations.createSlot(request);
@@ -69,13 +97,19 @@ public class OperationsController {
     }
 
     @PostMapping("/homework")
-    public Homework homework(@Valid @RequestBody SchoolDtos.HomeworkRequest request) {
-        return operations.createHomework(request);
+    public Map<String, Object> homework(@Valid @RequestBody SchoolDtos.HomeworkRequest request) {
+        var hw = operations.createHomework(request);
+        return Map.of(
+                "id", hw.getId(),
+                "title", hw.getTitle(),
+                "dueDate", hw.getDueDate().toString(),
+                "attachmentFileId", hw.getAttachmentFileId() == null ? "" : hw.getAttachmentFileId().toString()
+        );
     }
 
     @GetMapping("/homework")
-    public List<Homework> listHomework(@RequestParam(required = false) UUID sectionId,
-                                       @RequestParam(required = false) UUID studentId) {
+    public List<Map<String, Object>> listHomework(@RequestParam(required = false) UUID sectionId,
+                                                  @RequestParam(required = false) UUID studentId) {
         return operations.listHomework(sectionId, studentId);
     }
 
@@ -94,6 +128,12 @@ public class OperationsController {
     @GetMapping("/exams")
     public List<Map<String, Object>> exams() {
         return operations.listExams();
+    }
+
+    @PostMapping("/exams/{id}/publish")
+    public Map<String, Object> publishExam(@PathVariable UUID id) {
+        var exam = operations.publishExam(id);
+        return Map.of("id", exam.getId(), "name", exam.getName(), "status", exam.getStatus());
     }
 
     @GetMapping("/exams/{id}/subjects")

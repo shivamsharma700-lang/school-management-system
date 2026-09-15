@@ -16,6 +16,11 @@ import {
   StudentLifePage,
   TransportPagePublic,
 } from "./pages/PublicPages";
+import {
+  SiteFeaturesPage,
+  SiteModulesPage,
+  SiteSolutionsPage,
+} from "./site/pages";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const BranchesPage = lazy(() => import("./pages/CatalogPages").then((m) => ({ default: m.BranchesPage })));
@@ -58,25 +63,25 @@ const PendingFeesPage = lazy(() => import("./pages/PortalPages").then((m) => ({ 
 const LeaveApprovalsPage = lazy(() => import("./pages/PortalPages").then((m) => ({ default: m.LeaveApprovalsPage })));
 const StudyMaterialsPage = lazy(() => import("./pages/PortalPages").then((m) => ({ default: m.StudyMaterialsPage })));
 const AttendanceReportsPage = lazy(() => import("./pages/PortalPages").then((m) => ({ default: m.AttendanceReportsPage })));
-const EnquiriesPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.EnquiriesPage })));
-const ApplicationsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.ApplicationsPage })));
-const EntranceTestsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.EntranceTestsPage })));
-const InterviewsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.InterviewsPage })));
-const AdmissionsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.AdmissionsPage })));
-const PromotionsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.PromotionsPage })));
-const TransfersPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.TransfersPage })));
-const DocumentsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.DocumentsPage })));
-const EventsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.EventsPage })));
-const InventoryPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.InventoryPage })));
-const HrPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.HrPage })));
-const HealthPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.HealthPage })));
-const DisciplinePage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.DisciplinePage })));
-const SportsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.SportsPage })));
-const LabsPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.LabsPage })));
-const PtmPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.PtmPage })));
-const AlumniPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.AlumniPage })));
-const HostelPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.HostelPage })));
-const CanteenPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.CanteenPage })));
+const TeacherTasksPage = lazy(() => import("./pages/TaskPages").then((m) => ({ default: m.TeacherTasksPage })));
+const EnquiriesPage = lazy(() => import("./pages/AdmissionsPages").then((m) => ({ default: m.EnquiriesPage })));
+const ApplicationsPage = lazy(() => import("./pages/AdmissionsPages").then((m) => ({ default: m.ApplicationsPage })));
+const EntranceTestsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.EntranceTestsPage })));
+const InterviewsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.InterviewsPage })));
+const AdmissionsPage = lazy(() => import("./pages/AdmissionsPages").then((m) => ({ default: m.AdmissionsPage })));
+const PromotionsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.PromotionsPage })));
+const TransfersPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.TransfersPage })));
+const DocumentsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.DocumentsHubPage })));
+const EventsPage = lazy(() => import("./pages/EventsPages").then((m) => ({ default: m.EventsPage })));
+const InventoryPage = lazy(() => import("./pages/OpsPages").then((m) => ({ default: m.InventoryPage })));
+const HrPage = lazy(() => import("./pages/OpsPages").then((m) => ({ default: m.HrPage })));
+const HealthPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.HealthPage })));
+const DisciplinePage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.DisciplinePage })));
+const SportsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.SportsPage })));
+const LabsPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.LabsPage })));
+const PtmPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.PtmPage })));
+const AlumniPage = lazy(() => import("./pages/CampusLivePages").then((m) => ({ default: m.AlumniPage })));
+const WebsiteContentPage = lazy(() => import("./pages/ModulePages").then((m) => ({ default: m.WebsiteContentPage })));
 
 function Protected({ children }: { children: ReactElement }) {
   const { user } = useAuth();
@@ -84,10 +89,13 @@ function Protected({ children }: { children: ReactElement }) {
   return children;
 }
 
+/** Login gate only here; path RBAC is enforced in AppLayout (canAccessPath). */
+
 export default function App() {
   return (
-    <Suspense fallback={<div className="grid h-full place-items-center bg-[#f4f1ea] font-display text-2xl text-[#053321]">Loading the campus…</div>}>
+    <Suspense fallback={<div className="grid h-full place-items-center bg-canvas font-display text-2xl text-ink-900">Loading the campus…</div>}>
     <Routes>
+      {/* The school's own website */}
       <Route path="/" element={<HomePage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/academics" element={<AcademicsPage />} />
@@ -99,6 +107,15 @@ export default function App() {
       <Route path="/gallery" element={<GalleryPage />} />
       <Route path="/transport" element={<TransportPagePublic />} />
       <Route path="/contact" element={<ContactPage />} />
+
+      {/*
+        Product-platform pages for the School Management Application itself.
+        Kept off the school's primary navigation so the two identities do not mix.
+      */}
+      <Route path="/platform" element={<SiteFeaturesPage />} />
+      <Route path="/platform/modules" element={<SiteModulesPage />} />
+      <Route path="/platform/solutions" element={<SiteSolutionsPage />} />
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route
@@ -139,14 +156,14 @@ export default function App() {
         <Route path="labs" element={<LabsPage />} />
         <Route path="ptm" element={<PtmPage />} />
         <Route path="alumni" element={<AlumniPage />} />
-        <Route path="hostel" element={<HostelPage />} />
-        <Route path="canteen" element={<CanteenPage />} />
+        <Route path="website-content" element={<WebsiteContentPage />} />
         <Route path="classes" element={<ClassesPage />} />
         <Route path="classes/:classId/sections/:sectionId" element={<SectionDetailPage />} />
         <Route path="subjects" element={<SubjectsPage />} />
         <Route path="timetable" element={<TimetablePage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="staff-attendance" element={<StaffAttendancePage />} />
+        <Route path="tasks" element={<TeacherTasksPage />} />
         <Route path="attendance-reports" element={<AttendanceReportsPage />} />
         <Route path="homework" element={<HomeworkPage />} />
         <Route path="exams" element={<ExamsPage />} />

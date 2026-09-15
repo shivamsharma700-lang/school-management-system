@@ -7,11 +7,11 @@ export const demoEvents = [
 ];
 
 export const demoAdmissions = [
-  { id: "a1", name: "Kabir Malhotra", className: "VI", campus: "DPS Main Campus", when: "2 hours ago", status: "OFFERED" },
-  { id: "a2", name: "Sara Nair", className: "I", campus: "DPS Junior Campus", when: "5 hours ago", status: "INTERVIEW" },
-  { id: "a3", name: "Ishaan Bose", className: "IX", campus: "DPS East Campus", when: "Yesterday", status: "APPLIED" },
-  { id: "a4", name: "Diya Reddy", className: "Nursery", campus: "DPS North Campus", when: "Yesterday", status: "ENROLLED" },
-  { id: "a5", name: "Reyansh Jain", className: "XI Sci", campus: "DPS South Campus", when: "2 days ago", status: "TEST" },
+  { id: "a1", name: "Kabir Malhotra", className: "VI", campus: "Touch Wood Main Campus", when: "2 hours ago", status: "OFFERED" },
+  { id: "a2", name: "Sara Nair", className: "I", campus: "Touch Wood Junior Campus", when: "5 hours ago", status: "INTERVIEW" },
+  { id: "a3", name: "Ishaan Bose", className: "IX", campus: "Touch Wood East Campus", when: "Yesterday", status: "APPLIED" },
+  { id: "a4", name: "Diya Reddy", className: "Nursery", campus: "Touch Wood North Campus", when: "Yesterday", status: "ENROLLED" },
+  { id: "a5", name: "Reyansh Jain", className: "XI Sci", campus: "Touch Wood South Campus", when: "2 days ago", status: "TEST" },
 ];
 
 export const demoRecentPayments = [
@@ -30,7 +30,7 @@ export const demoEnrollment = [
 ];
 
 export const demoAttendanceMix = [
-  { name: "Present", value: 94, color: "#12885a" },
+  { name: "Present", value: 94, color: "#3A3A45" },
   { name: "Absent", value: 3, color: "#e11d48" },
   { name: "Late", value: 2, color: "#d97706" },
   { name: "Leave", value: 1, color: "#0284c7" },

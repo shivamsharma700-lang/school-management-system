@@ -49,8 +49,6 @@ const files = {
   "sections/homework.jpg": u("1456513080852-a5b3c18f240e"),
   "sections/attendance.jpg": u("1503676260728-1c00da094a0b"),
   "sections/events.jpg": u("1540575467063-178a50c2df87"),
-  "sections/hostel.jpg": u("1555854877-bab0e564b8d5"),
-  "sections/canteen.jpg": u("1567521464027-f127ff144326"),
   "sections/health.jpg": u("1576091160550-2173dba950ef"),
   "sections/reports.jpg": u("1551288049-bebda4e38f71"),
   "sections/settings.jpg": u("1497366754035-f090982b67d4"),

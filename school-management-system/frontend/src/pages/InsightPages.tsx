@@ -8,9 +8,11 @@ import { canAudit, canReports } from "../lib/roles";
 import type { AuditRow } from "../lib/types";
 import {
   Badge,
+  Button,
   Card,
   Drawer,
   EmptyState,
+  ErrorState,
   Input,
   PageHeader,
   Select,
@@ -27,28 +29,104 @@ export function ReportsPage() {
     enabled: canReports(user?.role),
     queryFn: () => api<{ students: number; overdueLoans: number; pendingLeave: number; generatedAt: string }>("/api/reports/summary"),
   });
+  const students = useQuery({
+    queryKey: ["students-export"],
+    enabled: canReports(user?.role),
+    queryFn: () => api<{ items: Array<{ admissionNumber: string; fullName: string; className?: string; sectionName?: string; status: string; mobile?: string }> }>("/api/students?size=200"),
+  });
+  const pending = useQuery({
+    queryKey: ["invoices-pending-export"],
+    enabled: canReports(user?.role),
+    queryFn: () => api<Array<{ invoiceNumber: string; studentName?: string; dueDate: string; totalAmount: number | string; paidAmount: number | string; status: string }>>("/api/invoices?status=PENDING"),
+  });
+  const events = useQuery({
+    queryKey: ["events-export"],
+    enabled: canReports(user?.role),
+    queryFn: () => api<Array<{ title: string; eventType: string; startsAt: string; status: string }>>("/api/events"),
+  });
+
+  function downloadCsv(filename: string, headers: string[], rows: string[][]) {
+    const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!canReports(user?.role)) {
-    return <EmptyState title="Reports unavailable" body="Your role cannot read the reports summary endpoint." />;
+    return <EmptyState title="Reports unavailable" body="Your role does not have access to school reports." />;
   }
   const chart = [
     { name: "Students", value: reports.data?.students ?? 0 },
     { name: "Library loans", value: reports.data?.overdueLoans ?? 0 },
     { name: "Pending leave", value: reports.data?.pendingLeave ?? 0 },
+    { name: "Pending fees", value: pending.data?.length ?? 0 },
   ];
   return (
     <div>
       <PageHeader
         crumbs={["Insights"]}
         title="Reports"
-        subtitle="Live summary from /api/reports/summary. There is no export endpoint yet, so no fake CSV download is shown."
+        subtitle="Live summaries and CSV exports built from PostgreSQL APIs — no fabricated spreadsheets."
       />
       {reports.isLoading ? <Skeleton className="h-40" /> : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <StatCard label="Students" value={reports.data?.students ?? 0} glyph="student" />
           <StatCard label="Open / overdue loans" value={reports.data?.overdueLoans ?? 0} hint="Library" glyph="library" />
           <StatCard label="Pending leave" value={reports.data?.pendingLeave ?? 0} glyph="leave" />
+          <StatCard label="Pending invoices" value={pending.data?.length ?? 0} glyph="fees" />
         </div>
       )}
+      <Card className="mt-6">
+        <p className="mb-3 font-semibold">CSV exports (live data)</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!students.data?.items?.length}
+            onClick={() =>
+              downloadCsv(
+                "students.csv",
+                ["Admission", "Name", "Class", "Section", "Mobile", "Status"],
+                (students.data?.items ?? []).map((s) => [s.admissionNumber, s.fullName, s.className ?? "", s.sectionName ?? "", s.mobile ?? "", s.status])
+              )
+            }
+          >
+            Export students
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!pending.data?.length}
+            onClick={() =>
+              downloadCsv(
+                "pending-fees.csv",
+                ["Invoice", "Student", "Due", "Total", "Paid", "Status"],
+                (pending.data ?? []).map((i) => [i.invoiceNumber, i.studentName ?? "", i.dueDate, String(i.totalAmount), String(i.paidAmount), i.status])
+              )
+            }
+          >
+            Export pending fees
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!events.data?.length}
+            onClick={() =>
+              downloadCsv(
+                "events.csv",
+                ["Title", "Type", "Starts", "Status"],
+                (events.data ?? []).map((e) => [e.title, e.eventType, e.startsAt, e.status])
+              )
+            }
+          >
+            Export events
+          </Button>
+        </div>
+      </Card>
       <Card className="mt-6 h-80">
         <p className="mb-4 font-semibold">Summary comparison</p>
         <ResponsiveContainer width="100%" height={260}>
@@ -57,7 +135,7 @@ export function ReportsPage() {
             <XAxis dataKey="name" />
             <YAxis allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="value" fill="#12885a" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="value" fill="#3A3A45" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -166,7 +244,19 @@ export function AuditPage() {
 export function SettingsPage() {
   const { user } = useAuth();
   const [section, setSection] = useState("school");
-  const settings = useQuery({ queryKey: ["settings"], queryFn: () => api<{ app: string; role: string; branchScoped: boolean }>("/api/settings") });
+  const settings = useQuery({
+    queryKey: ["settings"],
+    queryFn: () =>
+      api<{
+        app: string;
+        role: string;
+        branchScoped: boolean;
+        branchId?: string;
+        branchCount?: number;
+        activeAcademicYear?: { id: string; name: string; startDate: string; endDate: string };
+        roles?: string[];
+      }>("/api/settings"),
+  });
   const sections = [
     { id: "school", label: "School" },
     { id: "branch", label: "Branch" },
@@ -175,9 +265,18 @@ export function SettingsPage() {
     { id: "notifications", label: "Notifications" },
     { id: "security", label: "Security" },
   ];
+  const year = settings.data?.activeAcademicYear;
   return (
     <div>
-      <PageHeader crumbs={["Organisation"]} title="Settings" subtitle="Workspace preferences. Mutable school settings are not persisted yet besides what the API already stores." />
+      <PageHeader crumbs={["Organisation"]} title="Settings" subtitle="Workspace configuration for this school." />
+      {settings.isError ? (
+        <ErrorState
+          message={(settings.error as Error)?.message || "Unable to load settings"}
+          status={(settings.error as { status?: number })?.status}
+          onRetry={() => settings.refetch()}
+        />
+      ) : null}
+      {!settings.isError ? (
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <Card padded={false} className="h-fit p-2">
           {sections.map((s) => (
@@ -191,37 +290,47 @@ export function SettingsPage() {
           ))}
         </Card>
         <Card>
+          {settings.isLoading ? <Skeleton className="h-40" /> : null}
           {section === "school" ? (
             <dl className="grid gap-4 text-sm">
-              <div><dt className="text-slate-500">School</dt><dd className="font-semibold">{SCHOOL_NAME}</dd></div>
-              <div><dt className="text-slate-500">Application</dt><dd className="font-semibold">{settings.data?.app ?? "School Management System"}</dd></div>
+              <div><dt className="text-slate-500">School</dt><dd className="font-semibold">{settings.data?.app ?? "—"}</dd></div>
               <div><dt className="text-slate-500">Signed in as</dt><dd>{user?.fullName}</dd></div>
               <div><dt className="text-slate-500">Workspace role</dt><dd><Badge>{prettyRole(settings.data?.role ?? user?.role)}</Badge></dd></div>
+              <div><dt className="text-slate-500">Campuses in scope</dt><dd className="font-semibold">{settings.data?.branchCount ?? "—"}</dd></div>
             </dl>
           ) : null}
           {section === "branch" ? (
             <div>
               <p className="font-semibold">Branch settings</p>
               <p className="mt-2 text-sm text-slate-500">{user?.branchName ?? "All branches"} · scoped={String(settings.data?.branchScoped ?? false)}</p>
+              <p className="mt-2 text-xs text-slate-400">Branch id: {settings.data?.branchId || "—"}</p>
             </div>
           ) : null}
           {section === "academic" ? (
-            <p className="text-sm text-slate-600">Academic years, classes and subjects are managed from the Academics section. Those records are the live settings.</p>
+            <div className="text-sm text-slate-600">
+              <p className="font-semibold">Active academic year</p>
+              <p className="mt-2">{year ? `${year.name} (${year.startDate} → ${year.endDate})` : "No ACTIVE year set"}</p>
+              <p className="mt-3">Years, classes and subjects are managed from Academics.</p>
+            </div>
           ) : null}
           {section === "users" ? (
-            <p className="text-sm text-slate-600">Roles are enforced by the Spring Boot API. The UI only hides actions your role cannot call.</p>
+            <div className="text-sm text-slate-600">
+              <p>Roles enforced by the API: {(settings.data?.roles ?? []).join(", ") || "see backend Role enum"}.</p>
+              <p className="mt-2">The UI hides actions your role cannot call via route RBAC.</p>
+            </div>
           ) : null}
           {section === "notifications" ? (
-            <p className="text-sm text-slate-600">In-app notifications are delivered by the backend. There is no preference API to persist email/SMS toggles yet.</p>
+            <p className="text-sm text-slate-600">In-app notifications are delivered by the backend. Open Notifications for the live inbox.</p>
           ) : null}
           {section === "security" ? (
             <div className="text-sm text-slate-600">
-              <p>JWT access tokens authenticate every /api call. Refresh tokens are stored locally after login.</p>
-              <p className="mt-2">Password reset uses a hashed token on the server. Never paste production secrets into the frontend.</p>
+              <p>JWT access + refresh tokens; login rate limiting; security response headers.</p>
+              <p className="mt-2">Password reset uses hashed server tokens. Never put production secrets in the frontend.</p>
             </div>
           ) : null}
         </Card>
       </div>
+      ) : null}
     </div>
   );
 }

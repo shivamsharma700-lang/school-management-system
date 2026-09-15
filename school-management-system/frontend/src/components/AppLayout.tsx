@@ -1,17 +1,41 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Suspense, useEffect, useMemo, useRef, useState, type WheelEvent } from "react";
 import { Bell, ChevronDown, ChevronLeft, CircleHelp, LogOut, Maximize2, Menu, Search, Settings, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { api } from "../lib/api";
 import { Avatar, Badge, cn, Select, Skeleton } from "./ui";
-import { BrandMark, DpsCrest, DemoChip, PremiumIcon } from "./brand";
+import { BrandMark, SchoolCrest, DemoChip, PremiumIcon } from "./brand";
 import { prettyRole, unwrapList } from "../lib/format";
-import { navForRole } from "../lib/nav";
+import { canAccessPath, navForRole } from "../lib/nav";
+import { DEMO_ONLY_PATHS, moduleStatusForPath } from "../lib/moduleRegistry";
 import { ChildProvider, useChildScope } from "../lib/child";
 import { DEMO_MODE, SCHOOL_NAME, demoBranches } from "../demo";
 import { useLiveOrDemo } from "../demo/useLiveOrDemo";
 import type { Branch, Student } from "../lib/types";
+
+function RoleGate({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!canAccessPath(user?.role, location.pathname)) {
+    return <Navigate to="/app/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
+function ModuleStatusBanner() {
+  const location = useLocation();
+  const entry = moduleStatusForPath(location.pathname);
+  if (!entry || !DEMO_ONLY_PATHS.has(entry.path)) return null;
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+      <DemoChip show />
+      <span>
+        <strong>{entry.label}</strong> is a workspace preview — {entry.notes}
+      </span>
+    </div>
+  );
+}
 
 function lockWheel(e: WheelEvent<HTMLElement>) {
   e.stopPropagation();
@@ -35,7 +59,7 @@ function SidebarInner({
   const navRef = useRef<HTMLElement>(null);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
-      return JSON.parse(localStorage.getItem("dps_nav_groups") || "{}") as Record<string, boolean>;
+      return JSON.parse(localStorage.getItem("twhps_nav_groups") || "{}") as Record<string, boolean>;
     } catch {
       return {};
     }
@@ -44,8 +68,8 @@ function SidebarInner({
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
-    el.scrollTop = Number(sessionStorage.getItem("dps_nav_scroll") || 0);
-    const onScroll = () => sessionStorage.setItem("dps_nav_scroll", String(el.scrollTop));
+    el.scrollTop = Number(sessionStorage.getItem("twhps_nav_scroll") || 0);
+    const onScroll = () => sessionStorage.setItem("twhps_nav_scroll", String(el.scrollTop));
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
@@ -64,15 +88,15 @@ function SidebarInner({
   const toggle = (id: string) => {
     setOpenGroups((prev) => {
       const next = { ...prev, [id]: !prev[id] };
-      localStorage.setItem("dps_nav_groups", JSON.stringify(next));
+      localStorage.setItem("twhps_nav_groups", JSON.stringify(next));
       return next;
     });
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,#052318_0%,#04180f_48%,#03140c_100%)] text-slate-300">
-      <div className={cn("flex shrink-0 items-center gap-3 border-b border-white/[0.06] px-4 py-5", compact && "justify-center px-2")}>
-        {compact ? <DpsCrest size={36} /> : <BrandMark size={40} light />}
+    <div className="flex h-full min-h-0 flex-col bg-[#15151A] text-slate-300">
+      <div className={cn("flex shrink-0 items-center gap-3 border-b border-white/[0.08] px-4 py-5", compact && "justify-center px-2")}>
+        {compact ? <SchoolCrest size={36} /> : <BrandMark size={40} light />}
       </div>
       <nav
         ref={navRef}
@@ -86,7 +110,7 @@ function SidebarInner({
               {!compact ? (
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500/90 hover:text-gilt-400"
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40 hover:text-gilt-400"
                   onClick={() => toggle(group.id)}
                   aria-expanded={expanded}
                 >
@@ -104,20 +128,17 @@ function SidebarInner({
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(
-                          "group relative flex items-center gap-3 rounded-[14px] px-2.5 py-2 text-[13px] font-semibold tracking-[-0.01em] transition duration-200",
+                          "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold tracking-[-0.01em] transition duration-200",
                           compact && "justify-center px-2",
                           isActive
-                            ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(197,160,89,0.4),0_10px_24px_rgba(0,0,0,0.18)]"
-                            : "text-slate-400 hover:bg-white/[0.045] hover:text-white"
+                            ? "bg-white/[0.12] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                            : "text-white/65 hover:bg-white/[0.06] hover:text-white"
                         )
                       }
                     >
                       {({ isActive }) => (
                         <>
-                          {isActive ? (
-                            <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-gilt-500" aria-hidden />
-                          ) : null}
-                          <PremiumIcon to={item.to} label={item.label} icon={item.icon} active={isActive} className={compact ? "h-10 w-10" : undefined} />
+                          <PremiumIcon to={item.to} label={item.label} icon={item.icon} active={isActive} className={compact ? "h-9 w-9" : undefined} />
                           {!compact ? <span className="truncate">{item.label}</span> : <span className="sr-only">{item.label}</span>}
                         </>
                       )}
@@ -129,6 +150,11 @@ function SidebarInner({
           );
         })}
       </nav>
+      {!compact ? (
+        <div className="shrink-0 border-t border-white/[0.08] px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gilt-400/80">Building brighter futures</p>
+        </div>
+      ) : null}
       {mode === "desktop" ? (
         <button
           className="m-2.5 flex shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200"
@@ -176,7 +202,7 @@ function Shell() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [branchFilter, setBranchFilter] = useState(() => sessionStorage.getItem("dps_branch_ui") || "");
+  const [branchFilter, setBranchFilter] = useState(() => sessionStorage.getItem("twhps_branch_ui") || "");
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const unread = useQuery({
@@ -234,20 +260,20 @@ function Shell() {
         </div>
       ) : null}
       <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <header className="z-20 flex h-[76px] shrink-0 items-center gap-3 border-b border-[#053321]/[0.07] bg-gradient-to-r from-white via-[#fbfaf6] to-white px-4 shadow-[0_8px_28px_rgba(5,51,33,0.05)] backdrop-blur-md">
-          <button className="rounded-xl p-2 text-[#053321] transition hover:bg-[#f3f7f4] lg:hidden" onClick={() => setMobileOpen((v) => !v)} aria-label="Toggle menu">
+        <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-line/80 bg-white/90 px-3 shadow-soft backdrop-blur-md sm:h-[64px] sm:gap-3 sm:px-5">
+          <button className="rounded-xl p-2 text-ink-900 transition hover:bg-ivory-200 lg:hidden" onClick={() => setMobileOpen((v) => !v)} aria-label="Toggle menu">
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <div className="relative min-w-0 flex-1">
             {canSearch ? (
               <>
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 sm:left-3.5" size={16} />
                 <input
                   ref={searchRef}
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search students, teachers, parents, notices… (Ctrl + K)"
-                  className="w-full rounded-2xl border border-[#053321]/10 bg-white/80 py-2.5 pl-10 pr-3 text-sm font-medium text-slate-700 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#053321]/25 focus:bg-white focus:shadow-[0_0_0_4px_rgba(5,51,33,0.06)]"
+                  placeholder="Search students…"
+                  className="w-full rounded-xl border border-line bg-white py-2 pl-9 pr-3 text-sm font-medium text-ink-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-forest-600 focus:shadow-[0_0_0_4px_rgba(22,107,79,0.08)] sm:rounded-2xl sm:py-2.5 sm:pl-10"
                   aria-label="Global search"
                 />
                 {debounced.length >= 2 ? (
@@ -258,7 +284,7 @@ function Shell() {
                       unwrapList<Student>(search.data).map((s) => (
                         <button
                           key={s.id}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-ivory-100"
                           onClick={() => {
                             setQ("");
                             setDebounced("");
@@ -289,8 +315,8 @@ function Shell() {
               value={branchFilter}
               onChange={(e) => {
                 setBranchFilter(e.target.value);
-                sessionStorage.setItem("dps_branch_ui", e.target.value);
-                window.dispatchEvent(new CustomEvent("dps-branch", { detail: e.target.value }));
+                sessionStorage.setItem("twhps_branch_ui", e.target.value);
+                window.dispatchEvent(new CustomEvent("school-branch", { detail: e.target.value }));
               }}
             >
               <option value="">All Branches</option>
@@ -337,7 +363,7 @@ function Shell() {
                 <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-slate-50" onClick={() => { setMenuOpen(false); navigate("/app/settings"); }}>
                   <Settings size={16} /> Settings
                 </button>
-                <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50" onClick={() => { logout(); navigate("/login"); }}>
+                <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50" onClick={() => { void logout().then(() => navigate("/login")); }}>
                   <LogOut size={16} /> Sign out
                 </button>
               </div>
@@ -352,7 +378,10 @@ function Shell() {
         <main className="portal-surface main-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden" onWheel={lockWheel}>
           <div className="mx-auto max-w-[1360px] px-4 py-6 sm:px-6">
             <Suspense fallback={<div className="grid gap-4"><Skeleton className="h-16" /><Skeleton className="h-64" /></div>}>
-              <Outlet />
+              <RoleGate>
+                <ModuleStatusBanner />
+                <Outlet />
+              </RoleGate>
             </Suspense>
           </div>
         </main>

@@ -68,11 +68,11 @@ export function BranchesPage() {
               <Card padded={false} className="h-full overflow-hidden transition hover:-translate-y-0.5">
                 <div className="relative h-28">
                   <MediaImage src={campusPhoto(b.code, b.name)} alt="" position="center 40%" className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#04180f]/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#08080A]/70 to-transparent" />
                   <span className="absolute right-3 top-3"><Badge tone={statusTone(b.status)}>{prettyStatus(b.status)}</Badge></span>
                 </div>
                 <div className="p-5">
-                  <p className="font-semibold text-[#053321]">{b.name}</p>
+                  <p className="font-semibold text-[#111114]">{b.name}</p>
                   <p className="text-xs uppercase tracking-wider text-slate-400">{b.code}</p>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600">
                     <p className="flex items-center gap-2"><MapPin size={14} /> {b.address || "Address not set"}</p>

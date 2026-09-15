@@ -95,9 +95,45 @@ public class CatalogService {
         year.setStartDate(request.startDate());
         year.setEndDate(request.endDate());
         year.setStatus(request.status() == null ? "UPCOMING" : request.status());
+        if ("ACTIVE".equalsIgnoreCase(year.getStatus())) {
+            deactivateOtherYears(null);
+        }
         years.save(year);
         audit.record("CREATE", "ACADEMIC_YEAR", year.getId().toString(), year.getName());
         return year;
+    }
+
+    @Transactional
+    public AcademicYear updateYear(UUID id, SchoolDtos.AcademicYearRequest request) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        AcademicYear year = years.findById(id).orElseThrow(() -> ApiException.notFound("Academic year not found"));
+        years.findByName(request.name()).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw ApiException.conflict("Academic year already exists");
+            }
+        });
+        year.setName(request.name());
+        year.setStartDate(request.startDate());
+        year.setEndDate(request.endDate());
+        if (request.status() != null) {
+            year.setStatus(request.status());
+        }
+        if ("ACTIVE".equalsIgnoreCase(year.getStatus())) {
+            deactivateOtherYears(id);
+        }
+        audit.record("UPDATE", "ACADEMIC_YEAR", id.toString(), year.getName());
+        return year;
+    }
+
+    private void deactivateOtherYears(UUID keepId) {
+        for (AcademicYear y : years.findAll()) {
+            if (keepId != null && y.getId().equals(keepId)) {
+                continue;
+            }
+            if ("ACTIVE".equalsIgnoreCase(y.getStatus())) {
+                y.setStatus("CLOSED");
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -130,6 +166,24 @@ public class CatalogService {
     }
 
     @Transactional
+    public SchoolClass updateClass(UUID id, SchoolDtos.ClassRequest request) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        SchoolClass c = classes.findById(id).orElseThrow(() -> ApiException.notFound("Class not found"));
+        access.assertBranch(c.getBranch().getId());
+        if (request.name() != null && !request.name().isBlank()) {
+            c.setName(request.name());
+        }
+        if (request.gradeLevel() != null) {
+            c.setGradeLevel(request.gradeLevel());
+        }
+        if (request.status() != null) {
+            c.setStatus(request.status());
+        }
+        audit.record("UPDATE", "CLASS", id.toString(), c.getName());
+        return c;
+    }
+
+    @Transactional
     public Section createSection(UUID classId, SchoolDtos.SectionRequest request) {
         access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
         SchoolClass c = classes.findById(classId).orElseThrow(() -> ApiException.notFound("Class not found"));
@@ -143,6 +197,28 @@ public class CatalogService {
         s.setCapacity(request.capacity());
         s.setStatus(request.status() == null ? "ACTIVE" : request.status());
         sections.save(s);
+        return s;
+    }
+
+    @Transactional
+    public Section updateSection(UUID classId, UUID sectionId, SchoolDtos.SectionRequest request) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        SchoolClass c = classes.findById(classId).orElseThrow(() -> ApiException.notFound("Class not found"));
+        access.assertBranch(c.getBranch().getId());
+        Section s = sections.findById(sectionId).orElseThrow(() -> ApiException.notFound("Section not found"));
+        if (!s.getSchoolClass().getId().equals(classId)) {
+            throw ApiException.notFound("Section not found");
+        }
+        if (request.name() != null && !request.name().isBlank()) {
+            s.setName(request.name());
+        }
+        if (request.capacity() != null) {
+            s.setCapacity(request.capacity());
+        }
+        if (request.status() != null) {
+            s.setStatus(request.status());
+        }
+        audit.record("UPDATE", "SECTION", sectionId.toString(), s.getName());
         return s;
     }
 
@@ -199,6 +275,24 @@ public class CatalogService {
         s.setCode(request.code());
         s.setStatus(request.status() == null ? "ACTIVE" : request.status());
         subjects.save(s);
+        return s;
+    }
+
+    @Transactional
+    public Subject updateSubject(UUID id, SchoolDtos.SubjectRequest request) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        Subject s = subjects.findById(id).orElseThrow(() -> ApiException.notFound("Subject not found"));
+        access.assertBranch(s.getBranch().getId());
+        if (request.name() != null && !request.name().isBlank()) {
+            s.setName(request.name());
+        }
+        if (request.code() != null && !request.code().isBlank()) {
+            s.setCode(request.code());
+        }
+        if (request.status() != null) {
+            s.setStatus(request.status());
+        }
+        audit.record("UPDATE", "SUBJECT", id.toString(), s.getCode());
         return s;
     }
 

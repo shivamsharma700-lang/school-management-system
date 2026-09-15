@@ -150,7 +150,8 @@ public final class SchoolDtos {
             @NotNull UUID subjectId,
             @NotBlank String title,
             @NotBlank String description,
-            @NotNull LocalDate dueDate
+            @NotNull LocalDate dueDate,
+            UUID attachmentFileId
     ) {
     }
 

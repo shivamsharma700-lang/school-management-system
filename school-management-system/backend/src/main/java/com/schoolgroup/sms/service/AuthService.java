@@ -5,10 +5,12 @@ import com.schoolgroup.sms.dto.AuthDtos;
 import com.schoolgroup.sms.entity.RefreshToken;
 import com.schoolgroup.sms.entity.UserAccount;
 import com.schoolgroup.sms.exception.ApiException;
+import com.schoolgroup.sms.repository.BranchRepository;
 import com.schoolgroup.sms.repository.PasswordResetTokenRepository;
 import com.schoolgroup.sms.repository.RefreshTokenRepository;
 import com.schoolgroup.sms.repository.UserAccountRepository;
 import com.schoolgroup.sms.security.JwtService;
+import com.schoolgroup.sms.security.SecurityUtils;
 import com.schoolgroup.sms.entity.PasswordResetToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserAccountRepository users;
+    private final BranchRepository branches;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordResetTokenRepository resetTokens;
     private final PasswordEncoder encoder;
@@ -34,6 +37,7 @@ public class AuthService {
     private final SecureRandom random = new SecureRandom();
 
     public AuthService(UserAccountRepository users,
+                       BranchRepository branches,
                        RefreshTokenRepository refreshTokens,
                        PasswordResetTokenRepository resetTokens,
                        PasswordEncoder encoder,
@@ -41,6 +45,7 @@ public class AuthService {
                        AppProperties properties,
                        AuditService audit) {
         this.users = users;
+        this.branches = branches;
         this.refreshTokens = refreshTokens;
         this.resetTokens = resetTokens;
         this.encoder = encoder;
@@ -67,11 +72,35 @@ public class AuthService {
         String hash = sha256(refreshToken);
         RefreshToken stored = refreshTokens.findByTokenHash(hash)
                 .orElseThrow(() -> ApiException.unauthorized("Invalid refresh token"));
-        if (stored.isRevoked() || stored.getExpiresAt().isBefore(Instant.now())) {
+        if (stored.isRevoked()) {
+            // Reuse of a revoked token — revoke all sessions for this user.
+            refreshTokens.revokeAllForUser(stored.getUser().getId());
+            throw ApiException.unauthorized("Invalid refresh token");
+        }
+        if (stored.getExpiresAt().isBefore(Instant.now())) {
+            stored.setRevoked(true);
             throw ApiException.unauthorized("Invalid refresh token");
         }
         stored.setRevoked(true);
         return issue(stored.getUser());
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        refreshTokens.findByTokenHash(sha256(refreshToken)).ifPresent(stored -> {
+            stored.setRevoked(true);
+            audit.record("LOGOUT", "USER", stored.getUser().getId().toString(), "refresh revoked");
+        });
+    }
+
+    @Transactional
+    public void logoutAll() {
+        var user = SecurityUtils.currentUser();
+        refreshTokens.revokeAllForUser(user.getId());
+        audit.record("LOGOUT_ALL", "USER", user.getId().toString(), "all refresh tokens revoked");
     }
 
     @Transactional
@@ -102,7 +131,7 @@ public class AuthService {
 
     public AuthDtos.UserSummary toSummary(UserAccount user) {
         UUID branchId = user.getBranch() == null ? null : user.getBranch().getId();
-        String branchName = user.getBranch() == null ? null : user.getBranch().getName();
+        String branchName = branchId == null ? null : branches.findById(branchId).map(b -> b.getName()).orElse(null);
         return new AuthDtos.UserSummary(user.getId(), user.getEmail(), user.getUsername(), user.getFullName(),
                 user.getRole().name(), branchId, branchName);
     }

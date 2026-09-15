@@ -16,6 +16,7 @@ import com.schoolgroup.sms.repository.PaymentRepository;
 import com.schoolgroup.sms.service.AccessService;
 import com.schoolgroup.sms.service.NotificationService;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.PageRequest;
@@ -67,6 +68,7 @@ public class AdminController {
     private final com.schoolgroup.sms.service.ProfileWorkspaceService workspace;
     private final NotificationService notifications;
     private final PaymentRepository payments;
+    private final com.schoolgroup.sms.repository.AcademicYearRepository years;
 
     public AdminController(AccessService access, UserAccountRepository users, StudentRepository students,
                            StaffRepository staff, InvoiceRepository invoices, AuditLogRepository auditLogs,
@@ -77,7 +79,8 @@ public class AdminController {
                            com.schoolgroup.sms.repository.StudentAttendanceRepository attendance,
                            com.schoolgroup.sms.repository.NoticeRepository notices,
                            com.schoolgroup.sms.service.ProfileWorkspaceService workspace,
-                           NotificationService notifications, PaymentRepository payments) {
+                           NotificationService notifications, PaymentRepository payments,
+                           com.schoolgroup.sms.repository.AcademicYearRepository years) {
         this.access = access;
         this.users = users;
         this.students = students;
@@ -94,6 +97,7 @@ public class AdminController {
         this.workspace = workspace;
         this.notifications = notifications;
         this.payments = payments;
+        this.years = years;
     }
 
     @GetMapping("/dashboard")
@@ -246,6 +250,14 @@ public class AdminController {
         return Map.of("id", user.getId(), "email", user.getEmail(), "role", user.getRole().name());
     }
 
+    @GetMapping("/staff/me/workspace")
+    @Transactional(readOnly = true)
+    public Map<String, Object> myStaffWorkspace() {
+        access.assertRoles(Role.TEACHER, Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        Staff me = access.requireStaff();
+        return workspace.staffWorkspace(me.getId());
+    }
+
     @GetMapping("/staff")
     @Transactional(readOnly = true)
     public List<Map<String, Object>> staff() {
@@ -274,6 +286,7 @@ public class AdminController {
     @Transactional(readOnly = true)
     public Map<String, Object> staffById(@PathVariable UUID id) {
         access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.TEACHER, Role.ACCOUNTANT);
+        access.assertOwnStaffOrAdmin(id);
         Staff s = staff.findById(id).orElseThrow(() -> ApiException.notFound("Staff not found"));
         access.assertBranch(s.getBranch().getId());
         java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
@@ -295,6 +308,7 @@ public class AdminController {
     @Transactional(readOnly = true)
     public Map<String, Object> staffWorkspace(@PathVariable UUID id) {
         access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.TEACHER, Role.ACCOUNTANT);
+        access.assertOwnStaffOrAdmin(id);
         return workspace.staffWorkspace(id);
     }
 
@@ -327,10 +341,34 @@ public class AdminController {
         )).toList(), result.getTotalElements(), page, size);
     }
 
+    @PostMapping("/guardians")
+    @Transactional
+    public Map<String, Object> createGuardian(@Valid @RequestBody com.schoolgroup.sms.dto.SchoolDtos.GuardianRequest request) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        if (guardians.findFirstByMobile(request.mobile()).isPresent()) {
+            throw ApiException.conflict("Guardian with this mobile already exists");
+        }
+        Guardian g = new Guardian();
+        g.setFullName(request.fullName());
+        g.setMobile(request.mobile());
+        g.setEmail(request.email());
+        g.setAddress(request.address());
+        g.setOccupation(request.occupation());
+        g.setStatus("ACTIVE");
+        guardians.save(g);
+        return Map.of(
+                "id", g.getId(),
+                "fullName", g.getFullName(),
+                "mobile", g.getMobile(),
+                "email", g.getEmail() == null ? "" : g.getEmail(),
+                "status", g.getStatus()
+        );
+    }
+
     @GetMapping("/audit-logs")
     @Transactional(readOnly = true)
     public List<Map<String, Object>> audit(@RequestParam(defaultValue = "0") int page) {
-        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN);
+        access.assertRoles(Role.SUPER_ADMIN);
         return auditLogs.findAll(PageRequest.of(page, 50, Sort.by("createdAt").descending())).stream()
                 .map(a -> {
                     java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
@@ -362,8 +400,30 @@ public class AdminController {
     }
 
     @GetMapping("/settings")
+    @Transactional(readOnly = true)
     public Map<String, Object> settings() {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT);
         var user = SecurityUtils.currentUser();
-        return Map.of("app", "Delhi Public School", "role", user.getRole().name(), "branchScoped", user.getRole() != Role.SUPER_ADMIN);
+        var activeYear = years.findFirstByStatus("ACTIVE");
+        long branchCount = user.getRole() == Role.SUPER_ADMIN
+                ? branches.count()
+                : (user.getBranchId() == null ? 0 : 1);
+        return Map.of(
+                "app", "Delhi Public School",
+                "role", user.getRole().name(),
+                "branchScoped", user.getRole() != Role.SUPER_ADMIN,
+                "branchId", user.getBranchId() == null ? "" : user.getBranchId().toString(),
+                "branchCount", branchCount,
+                "activeAcademicYear", activeYear.map(y -> Map.of(
+                        "id", y.getId().toString(),
+                        "name", y.getName(),
+                        "startDate", y.getStartDate().toString(),
+                        "endDate", y.getEndDate().toString(),
+                        "status", y.getStatus()
+                )).orElse(Map.of()),
+                "roles", List.of(
+                        "SUPER_ADMIN", "BRANCH_ADMIN", "PRINCIPAL", "TEACHER", "ACCOUNTANT", "PARENT", "STUDENT"
+                )
+        );
     }
 }

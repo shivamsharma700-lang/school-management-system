@@ -9,9 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.List;
@@ -53,6 +59,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleDenied(AccessDeniedException ex, HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, "Access denied", request, null);
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ApiError> handleBadRequest(Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid request parameters", request, null);
+    }
+
+    /**
+     * An unmatched route previously fell through to the catch-all below and was
+     * reported as 500, which made every client-side typo look like a server fault.
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ApiError> handleNotFound(Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Resource not found", request, null);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethod(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        return build(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed for this resource", request, null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Malformed request body", request, null);
     }
 
     @ExceptionHandler(Exception.class)

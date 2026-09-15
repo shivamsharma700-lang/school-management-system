@@ -12,15 +12,27 @@ server:
   error:
     include-stacktrace: never
     include-message: never
+  # Trust X-Forwarded-* from the reverse proxy (TLS terminates at the proxy).
+  forward-headers-strategy: framework
 
 app:
   jwt:
     secret: ${JWT_SECRET}
+  payment:
+    secret: ${PAYMENT_SECRET}
   seed:
     enabled: false
     volume: false
+  bootstrap:
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    username: ${BOOTSTRAP_ADMIN_USERNAME:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    full-name: ${BOOTSTRAP_ADMIN_FULL_NAME:Super Admin}
   cors:
     origins: ${CORS_ORIGINS}
+  files:
+    storage-dir: ${FILE_STORAGE_DIR}
 
 logging:
   level:

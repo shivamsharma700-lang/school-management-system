@@ -12,8 +12,11 @@ import com.schoolgroup.sms.entity.LeaveRequest;
 import com.schoolgroup.sms.entity.Mark;
 import com.schoolgroup.sms.entity.Notice;
 import com.schoolgroup.sms.entity.Role;
+import com.schoolgroup.sms.security.PermissionMatrix.Action;
+import com.schoolgroup.sms.security.PermissionMatrix.Resource;
 import com.schoolgroup.sms.entity.Section;
 import com.schoolgroup.sms.entity.Staff;
+import com.schoolgroup.sms.entity.StaffAttendance;
 import com.schoolgroup.sms.entity.Student;
 import com.schoolgroup.sms.entity.StudentAttendance;
 import com.schoolgroup.sms.entity.TimetableSlot;
@@ -30,6 +33,7 @@ import com.schoolgroup.sms.repository.LeaveRequestRepository;
 import com.schoolgroup.sms.repository.MarkRepository;
 import com.schoolgroup.sms.repository.NoticeRepository;
 import com.schoolgroup.sms.repository.SectionRepository;
+import com.schoolgroup.sms.repository.StaffAttendanceRepository;
 import com.schoolgroup.sms.repository.StaffRepository;
 import com.schoolgroup.sms.repository.StudentAttendanceRepository;
 import com.schoolgroup.sms.repository.StudentRepository;
@@ -63,6 +67,7 @@ public class OperationsService {
     private final UserAccountRepository users;
     private final TimetableSlotRepository timetable;
     private final StaffRepository staff;
+    private final StaffAttendanceRepository staffAttendance;
     private final SubjectRepository subjects;
     private final HomeworkRepository homework;
     private final HomeworkSubmissionRepository submissions;
@@ -77,7 +82,8 @@ public class OperationsService {
     public OperationsService(AccessService access, AuditService audit, NotificationService notifications,
                              StudentAttendanceRepository attendance, StudentRepository students,
                              SectionRepository sections, AcademicYearRepository years, UserAccountRepository users,
-                             TimetableSlotRepository timetable, StaffRepository staff, SubjectRepository subjects,
+                             TimetableSlotRepository timetable, StaffRepository staff, StaffAttendanceRepository staffAttendance,
+                             SubjectRepository subjects,
                              HomeworkRepository homework, HomeworkSubmissionRepository submissions,
                              ExamRepository exams, ExamSubjectRepository examSubjects, MarkRepository marks,
                              LeaveRequestRepository leaves, NoticeRepository notices, ComplaintRepository complaints,
@@ -92,6 +98,7 @@ public class OperationsService {
         this.users = users;
         this.timetable = timetable;
         this.staff = staff;
+        this.staffAttendance = staffAttendance;
         this.subjects = subjects;
         this.homework = homework;
         this.submissions = submissions;
@@ -160,7 +167,188 @@ public class OperationsService {
         out.put("absent", absent);
         out.put("percentage", pct);
         out.put("records", rows.size());
+        out.put("history", rows.stream().limit(60).map(r -> {
+            Map<String, Object> h = new LinkedHashMap<>();
+            h.put("id", r.getId());
+            h.put("date", r.getAttendanceDate().toString());
+            h.put("session", r.getSession());
+            h.put("status", r.getStatus());
+            h.put("remarks", r.getRemarks() == null ? "" : r.getRemarks());
+            return h;
+        }).toList());
+        LocalDate now = LocalDate.now();
+        List<StudentAttendance> monthRows = attendance.findByStudentIdAndAttendanceDateBetween(
+                student.getId(), now.withDayOfMonth(1), now);
+        long monthTotal = monthRows.size();
+        long monthPresent = monthRows.stream().filter(r -> "PRESENT".equals(r.getStatus()) || "LATE".equals(r.getStatus())).count();
+        out.put("monthlyPercentage", monthTotal == 0 ? BigDecimal.ZERO :
+                BigDecimal.valueOf(monthPresent * 100.0 / monthTotal).setScale(2, RoundingMode.HALF_UP));
+        List<StudentAttendance> yearRows = attendance.findByStudentIdAndAttendanceDateBetween(
+                student.getId(), now.withDayOfYear(1), now);
+        long yearTotal = yearRows.size();
+        long yearPresent = yearRows.stream().filter(r -> "PRESENT".equals(r.getStatus()) || "LATE".equals(r.getStatus())).count();
+        out.put("yearlyPercentage", yearTotal == 0 ? BigDecimal.ZERO :
+                BigDecimal.valueOf(yearPresent * 100.0 / yearTotal).setScale(2, RoundingMode.HALF_UP));
+        String todayStatus = rows.stream()
+                .filter(r -> now.equals(r.getAttendanceDate()))
+                .map(StudentAttendance::getStatus)
+                .findFirst()
+                .orElse("");
+        out.put("today", todayStatus);
         return out;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> attendanceReport(UUID sectionId, LocalDate date, String session) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.TEACHER, Role.ACCOUNTANT);
+        Section section = sections.findById(sectionId).orElseThrow(() -> ApiException.notFound("Section not found"));
+        access.assertBranch(section.getSchoolClass().getBranch().getId());
+        LocalDate d = date == null ? LocalDate.now() : date;
+        String sess = session == null ? "FULL_DAY" : session;
+        List<StudentAttendance> rows = attendance.findBySectionIdAndAttendanceDateAndSession(sectionId, d, sess);
+        long present = rows.stream().filter(r -> "PRESENT".equals(r.getStatus()) || "LATE".equals(r.getStatus())).count();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("sectionId", sectionId);
+        out.put("className", section.getSchoolClass().getName());
+        out.put("sectionName", section.getName());
+        out.put("date", d.toString());
+        out.put("session", sess);
+        out.put("marked", rows.size());
+        out.put("present", present);
+        out.put("absent", rows.stream().filter(r -> "ABSENT".equals(r.getStatus())).count());
+        out.put("late", rows.stream().filter(r -> "LATE".equals(r.getStatus())).count());
+        out.put("percentage", rows.isEmpty() ? BigDecimal.ZERO :
+                BigDecimal.valueOf(present * 100.0 / rows.size()).setScale(2, RoundingMode.HALF_UP));
+        out.put("entries", rows.stream().map(r -> {
+            Map<String, Object> e = new LinkedHashMap<>();
+            e.put("studentId", r.getStudent().getId());
+            e.put("studentName", r.getStudent().getFullName());
+            e.put("status", r.getStatus());
+            e.put("remarks", r.getRemarks() == null ? "" : r.getRemarks());
+            return e;
+        }).toList());
+        return out;
+    }
+
+    @Transactional
+    public void submitStaffAttendance(List<Map<String, Object>> entries, LocalDate date) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        LocalDate d = date == null ? LocalDate.now() : date;
+        UserAccount marker = users.findById(access.current().getId()).orElseThrow();
+        for (Map<String, Object> entry : entries) {
+            UUID staffId = UUID.fromString(String.valueOf(entry.get("staffId")));
+            String status = String.valueOf(entry.getOrDefault("status", "PRESENT"));
+            Staff member = staff.findById(staffId).orElseThrow(() -> ApiException.notFound("Staff not found"));
+            access.assertBranch(member.getBranch().getId());
+            if (staffAttendance.existsByStaffIdAndAttendanceDate(staffId, d)) {
+                throw ApiException.conflict("Attendance already marked for " + member.getUser().getFullName());
+            }
+            StaffAttendance row = new StaffAttendance();
+            row.setStaff(member);
+            row.setBranch(member.getBranch());
+            row.setAttendanceDate(d);
+            row.setStatus(status);
+            row.setRemarks(entry.get("remarks") == null ? null : String.valueOf(entry.get("remarks")));
+            row.setMarkedBy(marker);
+            staffAttendance.save(row);
+        }
+        audit.record("CREATE", "STAFF_ATTENDANCE", d.toString(), String.valueOf(entries.size()));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> listStaffAttendance(LocalDate date) {
+        Role role = access.current().getRole();
+        if (role == Role.TEACHER) {
+            Staff me = access.requireStaff();
+            return staffAttendance.findByStaffIdOrderByAttendanceDateDesc(me.getId()).stream()
+                    .limit(60)
+                    .map(this::toStaffAttendanceRow)
+                    .toList();
+        }
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT);
+        LocalDate d = date == null ? LocalDate.now() : date;
+        UUID branchId = role == Role.SUPER_ADMIN ? null : access.requireBranch();
+        return staffAttendance.findByAttendanceDateOrderByCreatedAtDesc(d).stream()
+                .filter(r -> branchId == null || r.getBranch().getId().equals(branchId))
+                .map(this::toStaffAttendanceRow)
+                .toList();
+    }
+
+    private Map<String, Object> toStaffAttendanceRow(StaffAttendance r) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", r.getId());
+        row.put("staffId", r.getStaff().getId());
+        row.put("name", r.getStaff().getUser().getFullName());
+        row.put("employeeCode", r.getStaff().getEmployeeCode());
+        row.put("date", r.getAttendanceDate().toString());
+        row.put("status", r.getStatus());
+        row.put("remarks", r.getRemarks() == null ? "" : r.getRemarks());
+        return row;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> staffAttendanceSummary(LocalDate from, LocalDate to, UUID staffId) {
+        Role role = access.current().getRole();
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL, Role.ACCOUNTANT, Role.TEACHER);
+        LocalDate start = from == null ? LocalDate.now().withDayOfMonth(1) : from;
+        LocalDate end = to == null ? LocalDate.now() : to;
+        if (end.isBefore(start)) {
+            throw ApiException.badRequest("to date must be on or after from date");
+        }
+        UUID branchId = role == Role.SUPER_ADMIN ? null : access.requireBranch();
+        UUID onlyStaff = null;
+        if (role == Role.TEACHER) {
+            onlyStaff = access.requireStaff().getId();
+        } else if (staffId != null) {
+            onlyStaff = staffId;
+        }
+        UUID finalOnly = onlyStaff;
+        List<StaffAttendance> rows = staffAttendance.findAll().stream()
+                .filter(r -> !r.getAttendanceDate().isBefore(start) && !r.getAttendanceDate().isAfter(end))
+                .filter(r -> branchId == null || r.getBranch().getId().equals(branchId))
+                .filter(r -> finalOnly == null || r.getStaff().getId().equals(finalOnly))
+                .toList();
+        Map<UUID, List<StaffAttendance>> byStaff = rows.stream()
+                .collect(java.util.stream.Collectors.groupingBy(r -> r.getStaff().getId()));
+        List<Map<String, Object>> staffRows = new java.util.ArrayList<>();
+        byStaff.forEach((id, list) -> {
+            long present = list.stream().filter(r -> "PRESENT".equals(r.getStatus()) || "LATE".equals(r.getStatus())).count();
+            long absent = list.stream().filter(r -> "ABSENT".equals(r.getStatus())).count();
+            long late = list.stream().filter(r -> "LATE".equals(r.getStatus())).count();
+            long leave = list.stream().filter(r -> "LEAVE".equals(r.getStatus())).count();
+            long total = list.size();
+            java.math.BigDecimal pct = total == 0 ? java.math.BigDecimal.ZERO
+                    : java.math.BigDecimal.valueOf(present * 100.0 / total).setScale(1, java.math.RoundingMode.HALF_UP);
+            Staff member = list.get(0).getStaff();
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("staffId", id);
+            row.put("name", member.getUser().getFullName());
+            row.put("employeeCode", member.getEmployeeCode());
+            row.put("present", present);
+            row.put("absent", absent);
+            row.put("late", late);
+            row.put("leave", leave);
+            row.put("total", total);
+            row.put("percentage", pct);
+            staffRows.add(row);
+        });
+        staffRows.sort(java.util.Comparator.comparing(r -> String.valueOf(r.get("name"))));
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("from", start.toString());
+        out.put("to", end.toString());
+        out.put("staff", staffRows);
+        out.put("markedDays", rows.stream().map(StaffAttendance::getAttendanceDate).distinct().count());
+        return out;
+    }
+
+    @Transactional
+    public Exam publishExam(UUID examId) {
+        access.assertRoles(Role.SUPER_ADMIN, Role.BRANCH_ADMIN, Role.PRINCIPAL);
+        Exam exam = exams.findById(examId).orElseThrow(() -> ApiException.notFound("Exam not found"));
+        access.assertBranch(exam.getBranch().getId());
+        exam.setStatus("PUBLISHED");
+        audit.record("UPDATE", "EXAM", examId.toString(), "PUBLISHED");
+        return exam;
     }
 
     public List<TimetableSlot> timetableForSection(UUID sectionId, UUID academicYearId) {
@@ -272,6 +460,7 @@ public class OperationsService {
         hw.setTitle(request.title());
         hw.setDescription(request.description());
         hw.setDueDate(request.dueDate());
+        hw.setAttachmentFileId(request.attachmentFileId());
         homework.save(hw);
         students.findBySectionIdAndStatus(section.getId(), "ACTIVE").forEach(st -> {
             if (st.getUser() != null) {
@@ -282,30 +471,55 @@ public class OperationsService {
         return hw;
     }
 
-    public List<Homework> listHomework(UUID sectionId, UUID studentId) {
+    public List<Map<String, Object>> listHomework(UUID sectionId, UUID studentId) {
+        access.assertCan(Resource.HOMEWORK, Action.VIEW);
+        List<Homework> rows;
         if (studentId != null) {
             Student student = access.requireStudentAccess(studentId);
             if (student.getSection() == null) {
                 return List.of();
             }
-            return homework.findBySectionId(student.getSection().getId());
-        }
-        if (sectionId != null) {
+            rows = homework.findBySectionId(student.getSection().getId());
+        } else if (sectionId != null) {
             Section section = sections.findById(sectionId).orElseThrow(() -> ApiException.notFound("Section not found"));
             access.assertBranch(section.getSchoolClass().getBranch().getId());
-            return homework.findBySectionId(sectionId);
-        }
-        if (access.current().getRole() == Role.STUDENT) {
+            rows = homework.findBySectionId(sectionId);
+        } else if (access.current().getRole() == Role.STUDENT) {
             Student student = students.findByUserId(access.current().getId()).orElseThrow(() -> ApiException.forbidden("Student profile not found"));
             if (student.getSection() == null) {
                 return List.of();
             }
-            return homework.findBySectionId(student.getSection().getId());
+            rows = homework.findBySectionId(student.getSection().getId());
+        } else if (access.current().getRole() == Role.TEACHER) {
+            Staff me = access.requireStaff();
+            rows = homework.findByStaffId(me.getId());
+        } else if (access.current().getRole() == Role.SUPER_ADMIN) {
+            rows = homework.findAll();
+        } else {
+            UUID branchId = access.requireBranch();
+            rows = homework.findAll().stream()
+                    .filter(h -> h.getBranch().getId().equals(branchId))
+                    .toList();
         }
-        UUID branchId = access.requireBranch();
-        return homework.findAll().stream()
-                .filter(h -> access.current().getRole() == Role.SUPER_ADMIN || h.getBranch().getId().equals(branchId))
-                .toList();
+        return rows.stream().map(this::homeworkApiRow).toList();
+    }
+
+    private Map<String, Object> homeworkApiRow(Homework h) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", h.getId());
+        row.put("title", h.getTitle());
+        row.put("description", h.getDescription());
+        row.put("dueDate", h.getDueDate() == null ? "" : h.getDueDate().toString());
+        row.put("subject", h.getSubject() == null ? "" : h.getSubject().getName());
+        row.put("subjectId", h.getSubject() == null ? "" : h.getSubject().getId().toString());
+        row.put("teacher", h.getStaff() == null || h.getStaff().getUser() == null ? "" : h.getStaff().getUser().getFullName());
+        row.put("classId", h.getSchoolClass() == null ? "" : h.getSchoolClass().getId().toString());
+        row.put("className", h.getSchoolClass() == null ? "" : h.getSchoolClass().getName());
+        row.put("sectionId", h.getSection() == null ? "" : h.getSection().getId().toString());
+        row.put("sectionName", h.getSection() == null ? "" : h.getSection().getName());
+        row.put("status", h.getDueDate() != null && h.getDueDate().isBefore(LocalDate.now()) ? "OVERDUE" : "OPEN");
+        row.put("attachmentFileId", h.getAttachmentFileId() == null ? "" : h.getAttachmentFileId().toString());
+        return row;
     }
 
     @Transactional
@@ -349,13 +563,16 @@ public class OperationsService {
                 .orElseThrow(() -> ApiException.notFound("Exam subject not found"));
         access.assertBranch(subject.getExam().getBranch().getId());
         Student student = access.requireStudentAccess(request.studentId());
+        if (student.getSection() != null) {
+            UUID yearId = subject.getExam().getAcademicYear() == null ? null : subject.getExam().getAcademicYear().getId();
+            access.assertTeacherSection(student.getSection().getId(), yearId);
+        }
         if (request.marksObtained().compareTo(subject.getMaxMarks()) > 0 || request.marksObtained().signum() < 0) {
             throw ApiException.badRequest("Marks must be between 0 and maximum");
         }
-        if (marks.existsByExamSubjectIdAndStudentId(subject.getId(), student.getId())) {
-            throw ApiException.conflict("Marks already entered for this student");
-        }
-        Mark mark = new Mark();
+        var existing = marks.findByExamSubjectIdAndStudentId(subject.getId(), student.getId());
+        Mark mark = existing.orElseGet(Mark::new);
+        boolean creating = existing.isEmpty();
         mark.setExamSubject(subject);
         mark.setStudent(student);
         mark.setMarksObtained(request.marksObtained());
@@ -363,7 +580,9 @@ public class OperationsService {
         mark.setRemarks(request.remarks());
         mark.setEnteredBy(users.findById(access.current().getId()).orElseThrow());
         marks.save(mark);
-        if (student.getUser() != null) {
+        audit.record(creating ? "CREATE" : "UPDATE", "MARK", mark.getId().toString(),
+                subject.getSubject().getName() + "=" + mark.getMarksObtained() + " (student " + student.getAdmissionNumber() + ")");
+        if (student.getUser() != null && "PUBLISHED".equals(subject.getExam().getStatus())) {
             notifications.notifyUser(student.getUser(), student.getBranch(), "RESULT",
                     "Marks published", subject.getSubject().getName() + ": " + mark.getMarksObtained(),
                     "MARK", mark.getId());
@@ -373,9 +592,13 @@ public class OperationsService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listExams() {
+        access.assertCan(Resource.EXAM, Action.VIEW);
         UUID branchId = access.current().getRole() == Role.SUPER_ADMIN ? null : access.requireBranch();
+        Role role = access.current().getRole();
+        boolean publishedOnly = role == Role.PARENT || role == Role.STUDENT;
         return exams.findAll().stream()
                 .filter(e -> branchId == null || e.getBranch().getId().equals(branchId))
+                .filter(e -> !publishedOnly || "PUBLISHED".equals(e.getStatus()))
                 .sorted(Comparator.comparing(Exam::getStartDate, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(e -> {
                     Map<String, Object> row = new LinkedHashMap<>();
@@ -444,6 +667,11 @@ public class OperationsService {
 
     public Map<String, Object> reportCard(UUID studentId, UUID examId) {
         Student student = access.requireStudentAccess(studentId);
+        Exam exam = exams.findById(examId).orElseThrow(() -> ApiException.notFound("Exam not found"));
+        Role role = access.current().getRole();
+        if ((role == Role.PARENT || role == Role.STUDENT) && !"PUBLISHED".equals(exam.getStatus())) {
+            throw ApiException.forbidden("Results are not published yet");
+        }
         List<Mark> studentMarks = marks.findByStudentId(student.getId()).stream()
                 .filter(m -> m.getExamSubject().getExam().getId().equals(examId))
                 .toList();
@@ -451,7 +679,7 @@ public class OperationsService {
         BigDecimal max = studentMarks.stream().map(m -> m.getExamSubject().getMaxMarks()).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal pct = max.signum() == 0 ? BigDecimal.ZERO : total.multiply(BigDecimal.valueOf(100)).divide(max, 2, RoundingMode.HALF_UP);
         return Map.of("student", student.getFullName(), "total", total, "max", max, "percentage", pct,
-                "grade", grade(total, max), "subjects", studentMarks.size());
+                "grade", grade(total, max), "subjects", studentMarks.size(), "examStatus", exam.getStatus());
     }
 
     @Transactional

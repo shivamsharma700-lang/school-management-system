@@ -70,6 +70,7 @@ const all: NavGroup[] = [
     items: [
       { to: "/app/teachers", label: "Teachers", icon: GraduationCap },
       { to: "/app/staff", label: "Non-Teaching Staff", icon: Briefcase },
+      { to: "/app/tasks", label: "Teacher tasks", icon: ClipboardCheck },
       { to: "/app/hr", label: "HR & Payroll", icon: Briefcase },
     ],
   },
@@ -115,7 +116,7 @@ const all: NavGroup[] = [
       { to: "/app/notices", label: "Notices", icon: Bell },
       { to: "/app/notifications", label: "Notifications", icon: Bell },
       { to: "/app/complaints", label: "Complaints", icon: MessageSquare },
-      { to: "/app/communication", label: "Teacher communication", icon: MessageSquare },
+      { to: "/app/communication", label: "Notices hub", icon: MessageSquare },
     ],
   },
   {
@@ -135,8 +136,6 @@ const all: NavGroup[] = [
       { to: "/app/library", label: "Library", icon: Library },
       { to: "/app/inventory", label: "Inventory", icon: Package },
       { to: "/app/events", label: "Events", icon: CalendarDays },
-      { to: "/app/hostel", label: "Hostel", icon: School },
-      { to: "/app/canteen", label: "Canteen", icon: Package },
       { to: "/app/health", label: "Health", icon: HeartPulse },
       { to: "/app/discipline", label: "Discipline", icon: ClipboardCheck },
       { to: "/app/sports", label: "Sports", icon: Trophy },
@@ -151,6 +150,7 @@ const all: NavGroup[] = [
     items: [
       { to: "/app/reports", label: "Reports", icon: ScrollText },
       { to: "/app/analytics", label: "Analytics", icon: ScrollText },
+      { to: "/app/website-content", label: "Website content", icon: FileText },
     ],
   },
 ];
@@ -174,19 +174,20 @@ const extraAdmin = [
   "/app/labs",
   "/app/ptm",
   "/app/alumni",
-  "/app/hostel",
-  "/app/canteen",
 ];
 
 const allowByRole: Record<string, string[]> = {
   SUPER_ADMIN: Array.from(new Set(all.flatMap((g) => g.items.map((i) => i.to)))).filter((to) => to !== "/app/children"),
   BRANCH_ADMIN: [
     "/app/dashboard",
+    "/app/branches",
+    "/app/users",
     "/app/students",
     "/app/guardians",
     "/app/teachers",
     "/app/staff",
     "/app/hr",
+    "/app/tasks",
     "/app/academic-years",
     "/app/classes",
     "/app/subjects",
@@ -196,11 +197,15 @@ const allowByRole: Record<string, string[]> = {
     "/app/marks",
     "/app/results",
     "/app/report-cards",
+    "/app/study-materials",
     "/app/attendance",
     "/app/staff-attendance",
+    "/app/attendance-reports",
     "/app/fees",
     "/app/invoices",
     "/app/payments",
+    "/app/receipts",
+    "/app/pending-fees",
     "/app/library",
     "/app/bus-tracking",
     "/app/transport",
@@ -210,12 +215,14 @@ const allowByRole: Record<string, string[]> = {
     "/app/leave",
     "/app/leave-approvals",
     "/app/reports",
+    "/app/analytics",
     "/app/audit",
     "/app/notifications",
     "/app/settings",
     "/app/events",
     "/app/admissions",
     "/app/enquiries",
+    "/app/applications",
     "/app/documents",
     "/app/health",
     "/app/discipline",
@@ -223,28 +230,41 @@ const allowByRole: Record<string, string[]> = {
   ],
   PRINCIPAL: [
     "/app/dashboard",
+    "/app/branches",
+    "/app/academic-years",
     "/app/students",
     "/app/guardians",
     "/app/teachers",
     "/app/staff",
+    "/app/tasks",
     "/app/classes",
     "/app/subjects",
     "/app/timetable",
     "/app/homework",
     "/app/exams",
+    "/app/marks",
     "/app/results",
+    "/app/report-cards",
+    "/app/study-materials",
     "/app/attendance",
+    "/app/staff-attendance",
+    "/app/attendance-reports",
     "/app/fees",
+    "/app/invoices",
+    "/app/pending-fees",
     "/app/notices",
     "/app/complaints",
     "/app/leave",
     "/app/leave-approvals",
     "/app/reports",
+    "/app/analytics",
     "/app/notifications",
     "/app/settings",
     "/app/events",
     "/app/ptm",
     "/app/discipline",
+    "/app/admissions",
+    "/app/enquiries",
   ],
   TEACHER: [
     "/app/dashboard",
@@ -252,14 +272,16 @@ const allowByRole: Record<string, string[]> = {
     "/app/students",
     "/app/timetable",
     "/app/attendance",
+    "/app/staff-attendance",
+    "/app/attendance-reports",
     "/app/homework",
     "/app/exams",
     "/app/marks",
     "/app/results",
+    "/app/tasks",
     "/app/leave",
     "/app/notices",
     "/app/notifications",
-    "/app/settings",
     "/app/ptm",
     "/app/study-materials",
   ],
@@ -273,12 +295,14 @@ const allowByRole: Record<string, string[]> = {
     "/app/reports",
     "/app/notifications",
     "/app/settings",
+    "/app/students",
   ],
   PARENT: [
     "/app/dashboard",
     "/app/children",
     "/app/timetable",
     "/app/attendance",
+    "/app/attendance-reports",
     "/app/homework",
     "/app/exams",
     "/app/results",
@@ -296,12 +320,14 @@ const allowByRole: Record<string, string[]> = {
     "/app/leave",
     "/app/library",
     "/app/events",
-    "/app/settings",
+    "/app/ptm",
+    "/app/transport",
   ],
   STUDENT: [
     "/app/dashboard",
     "/app/timetable",
     "/app/attendance",
+    "/app/attendance-reports",
     "/app/homework",
     "/app/exams",
     "/app/results",
@@ -314,12 +340,33 @@ const allowByRole: Record<string, string[]> = {
     "/app/leave",
     "/app/bus-tracking",
     "/app/events",
-    "/app/settings",
+    "/app/transport",
+    "/app/achievements",
+  ],
+  /** Fleet operator: vehicles, drivers, routes, trips, boarding. No academics, no finance. */
+  TRANSPORT: [
+    "/app/dashboard",
+    "/app/transport",
+    "/app/bus-tracking",
+    "/app/notices",
+    "/app/notifications",
+    "/app/leave",
   ],
 };
 
+export function pathsForRole(role?: string | null): string[] {
+  return allowByRole[role ?? "STUDENT"] ?? allowByRole.STUDENT;
+}
+
+/** Route-level RBAC: exact match or detail-page prefix (e.g. /app/students/:id). */
+export function canAccessPath(role: string | null | undefined, pathname: string): boolean {
+  const path = pathname.split("?")[0].replace(/\/$/, "") || "/";
+  const allow = pathsForRole(role);
+  return allow.some((base) => path === base || path.startsWith(`${base}/`));
+}
+
 export function navForRole(role?: string | null): NavGroup[] {
-  const allow = new Set(allowByRole[role ?? "STUDENT"] ?? allowByRole.STUDENT);
+  const allow = new Set(pathsForRole(role));
   return all
     .map((g) => {
       const seen = new Set<string>();
@@ -335,4 +382,4 @@ export function navForRole(role?: string | null): NavGroup[] {
 }
 
 export type { ComponentType };
-export { extraAdmin };
+export { extraAdmin, allowByRole };

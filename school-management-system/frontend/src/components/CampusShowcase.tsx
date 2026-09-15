@@ -19,11 +19,11 @@ export function CampusDetail({
   const gallery = campus.gallery.filter(Boolean);
   const active = gallery[shot] ?? campus.hero;
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#04180f]/70 p-4 backdrop-blur-md" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#08080A]/70 p-4 backdrop-blur-md" onClick={onClose}>
       <div className="glass-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[28px] text-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="relative h-56">
           <MediaImage src={active} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#04180f]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#08080A]/80 to-transparent" />
           <button type="button" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/20 text-white" onClick={onClose} aria-label="Close campus">
             <X size={18} />
           </button>
@@ -48,13 +48,13 @@ export function CampusDetail({
           </div>
           <div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-[#053321]/5 p-3">
+              <div className="rounded-2xl bg-[#111114]/5 p-3">
                 <p className="text-xs text-slate-500">Students</p>
-                <p className="font-display text-2xl text-[#053321]">{studentCount ?? campus.students}</p>
+                <p className="font-display text-2xl text-[#111114]">{studentCount ?? campus.students}</p>
               </div>
-              <div className="rounded-2xl bg-[#053321]/5 p-3">
+              <div className="rounded-2xl bg-[#111114]/5 p-3">
                 <p className="text-xs text-slate-500">Classes</p>
-                <p className="font-display text-lg text-[#053321]">{classCount ? `${classCount} classes` : campus.classes}</p>
+                <p className="font-display text-lg text-[#111114]">{classCount ? `${classCount} classes` : campus.classes}</p>
               </div>
             </div>
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Facilities</p>
@@ -82,10 +82,10 @@ export function LoginCampusRail({
           key={c.code}
           type="button"
           onClick={() => onSelect(c)}
-          className={`relative h-24 w-40 shrink-0 overflow-hidden rounded-2xl border-2 ${c.code === activeCode ? "border-[#12885a] shadow-pop" : "border-transparent opacity-90"}`}
+          className={`relative h-24 w-40 shrink-0 overflow-hidden rounded-2xl border-2 ${c.code === activeCode ? "border-[#3A3A45] shadow-pop" : "border-transparent opacity-90"}`}
         >
           <MediaImage src={c.hero} alt="" className="h-full w-full object-cover" />
-          <span className="absolute inset-x-0 bottom-0 bg-[#04180f]/70 px-2 py-1 text-left text-[10px] font-semibold text-white">
+          <span className="absolute inset-x-0 bottom-0 bg-[#08080A]/70 px-2 py-1 text-left text-[10px] font-semibold text-white">
             {c.name}
             <span className="block font-normal text-white/70">{c.city}</span>
           </span>

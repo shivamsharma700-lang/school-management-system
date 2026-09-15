@@ -7,12 +7,15 @@ import { useChildScope } from "../lib/child";
 import { asName, asRecord, formatDate, formatHumanTime, formatMoney, formatNumber, str, unwrapList } from "../lib/format";
 import { canAudit } from "../lib/roles";
 import type { AcademicYear, AuditRow, Branch, DashboardAnalytics, DashboardData, ExamRow, StudentWorkspace } from "../lib/types";
-import { Button, Card, EmptyState, PageHeader, Skeleton, StatCard } from "../components/ui";
-import { DemoChip, CinematicBanner, StudentFigure } from "../components/brand";
-import { ActivityFeed, CampusMosaic, InsightKicker, Ornament, PersonCard, QuickActions } from "../components/visual";
+import { Card, EmptyState, ErrorState, Skeleton, StatCard } from "../components/ui";
+import { DemoChip } from "../components/brand";
+import { ActivityFeed, CampusMosaic, DashHero, InsightKicker, PersonCard, QuickActions } from "../components/visual";
+import { Premium3DIcon } from "../components/3d/Premium3DIcon";
 import { sectionImageForPath } from "../lib/mediaCatalog";
+import { SCHOOL, SCHOOL_CROP } from "../lib/schoolMedia";
+import { FieldMedia, MediaImage } from "../components/media";
 import { useLiveOrDemo } from "../demo/useLiveOrDemo";
-import { demoAttendance, demoBranches, demoBuses, demoDashboard, demoExams, demoHomework, demoInvoices, demoNotices, demoTimetable, demoAdmissions, demoRecentPayments, demoEvents, demoEnrollment, demoAttendanceMix, demoYears } from "../demo";
+import { DEMO_MODE, demoBranches, demoDashboard, demoExams, demoHomework, demoNotices, demoTimetable, demoAdmissions, demoRecentPayments, demoEvents, demoEnrollment, demoAttendanceMix, demoYears } from "../demo";
 import { SCHOOL_NAME } from "../demo/config";
 
 function greeting(name?: string) {
@@ -37,6 +40,7 @@ export function DashboardPage() {
   if (user?.role === "ACCOUNTANT") return <AccountantDash />;
   if (user?.role === "PRINCIPAL") return <PrincipalDash />;
   if (user?.role === "BRANCH_ADMIN") return <CampusDash />;
+  if (user?.role === "TRANSPORT") return <TransportDash />;
   return <SuperDash />;
 }
 
@@ -52,148 +56,335 @@ function SuperDash() {
   const extras = dash.isDemo;
   const charts = analyticsQ.data;
   const branchCount = live?.branches ?? branches.data?.length ?? (extras ? demoDashboard.branches : 0);
-  const today = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(new Date());
-  const bus = demoBuses[0];
+  const today = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
   const mix = (charts?.attendanceMix ?? []).map((row, i) => ({
     ...row,
-    color: ["#12885a", "#c9a227", "#e11d48", "#64748b"][i % 4],
+    color: ["#15151A", "#9A6205", "#F0A500", "#64748b"][i % 4],
   }));
-  const enrollment = charts?.enrollmentByClass?.length ? charts.enrollmentByClass : demoEnrollment.map((d) => ({ name: d.name, value: d.y2 }));
+  const attendanceSlices = mix.length
+    ? mix
+    : DEMO_MODE
+      ? demoAttendanceMix.map((row, i) => ({
+          ...row,
+          color: ["#15151A", "#9A6205", "#F0A500", "#64748b"][i % 4],
+        }))
+      : [];
+  const presentPct = live?.attendancePercent ?? (extras ? demoDashboard.attendanceToday : null);
+  const enrollment = charts?.enrollmentByClass?.length
+    ? charts.enrollmentByClass
+    : DEMO_MODE
+      ? demoEnrollment.map((d) => ({ name: d.name, value: d.y2 }))
+      : [];
+  const feePct = Number(live?.feeTotal) ? Math.min(100, (Number(live?.feeCollected) / Number(live?.feeTotal)) * 100) : (extras ? 79 : 0);
+  const admissions = charts?.recentAdmissions ?? (DEMO_MODE ? demoAdmissions : []);
+  const payments = charts?.recentPayments ?? (DEMO_MODE ? demoRecentPayments : []);
+  const branchCompare =
+    charts?.branchComparison?.length
+      ? charts.branchComparison.map((row) => ({ name: row.name, students: row.value }))
+      : DEMO_MODE
+        ? (branches.data ?? demoBranches).slice(0, 8).map((b, i) => ({
+            name: b.code || b.name?.split(" ").pop() || `C${i + 1}`,
+            students: Math.round(((Number(live?.students) || demoDashboard.students) / Math.max(1, branchCount)) * (0.85 + (i % 5) * 0.06)),
+          }))
+        : (branches.data ?? []).slice(0, 8).map((b) => ({
+            name: b.code || b.name?.split(" ").pop() || b.name,
+            students: 0,
+          }));
+  const branchCompareLive = Boolean(charts?.branchComparison?.length);
+  const eventsQ = useQuery({ queryKey: ["events"], queryFn: () => api<Array<{ id: string; title: string; eventType: string; audience: string; startsAt: string }>>("/api/events") });
+  const liveEvents = eventsQ.data ?? [];
+  const showEvents = liveEvents.length ? liveEvents.slice(0, 4) : (DEMO_MODE ? demoEvents.map((e) => ({ id: e.title + e.date, title: e.title, eventType: e.type, audience: e.audience, startsAt: e.date })) : []);
+  const activities = [
+    ...admissions.slice(0, 2).map((a) => ({
+      id: `a-${a.id}`,
+      title: `New admission · ${a.name}`,
+      meta: `${a.className} · ${a.campus}`,
+      when: a.when,
+      tone: "good" as const,
+    })),
+    ...payments.slice(0, 2).map((p) => ({
+      id: `p-${p.id}`,
+      title: `Fee payment · ${p.name}`,
+      meta: String(p.amount),
+      when: p.when,
+      tone: "gold" as const,
+    })),
+    ...(auditQ.data ?? []).slice(0, 2).map((r) => ({
+      id: r.id,
+      title: r.action,
+      meta: "Audit",
+      when: formatHumanTime(r.createdAt),
+      tone: "info" as const,
+    })),
+  ].slice(0, 5);
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gilt-600">Operations desk</p>
-          <h1 className="mt-1 font-display text-4xl text-[#053321]">Welcome back, {user?.fullName?.split(" ")[0] ?? "Super Admin"}</h1>
-          <p className="mt-1 text-sm text-slate-500">Here's what's happening across all {branchCount || 8} branches today.</p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-          <span className="rounded-full bg-white px-3 py-1.5 shadow-card">{today}</span>
-          <span className="rounded-full bg-white px-3 py-1.5 shadow-card">Academic year 2025-26</span>
-          <span className="rounded-full bg-white px-3 py-1.5 shadow-card">{branchCount} campuses</span>
-        </div>
-      </div>
-      <CinematicBanner
-        className="mb-6"
-        pathname="/app/dashboard"
-        title="Where Potential Meets Purpose"
-        subtitle={`Live operations across ${SCHOOL_NAME}. API totals win; labelled demo chips mark fallback charts.`}
-        showImage
+    <div className="fade-up space-y-8">
+      <DashHero
+        kicker="School management overview"
+        title={greeting(user?.fullName)}
+        body={`${SCHOOL_NAME} operations desk — students, attendance, fees, notices and campus administration.`}
+        meta={`${today} · ${branchCount || 8} campuses`}
+        image={SCHOOL.dashboardHero}
+        position="center 40%"
+        aside={
+          <div className="rounded-2xl border border-white/15 bg-ink-950/55 p-5 backdrop-blur-md">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gilt-400">Today</p>
+            <ul className="mt-3 space-y-2 text-sm text-white/85">
+              <li className="flex justify-between gap-6 border-b border-white/10 pb-2">
+                <span>Attendance</span>
+                <span className="font-semibold text-gilt-400">{presentPct != null ? `${presentPct}%` : "—"}</span>
+              </li>
+              <li className="flex justify-between gap-6 border-b border-white/10 pb-2">
+                <span>Fees collected</span>
+                <span className="font-semibold">{formatMoney(live?.feeCollected)}</span>
+              </li>
+              <li className="flex justify-between gap-6">
+                <span>Pending invoices</span>
+                <span className="font-semibold">{formatNumber(live?.pendingInvoices)}</span>
+              </li>
+            </ul>
+          </div>
+        }
       />
-      {dash.isLoading ? <Skeleton className="h-32" /> : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <StatCard label="Total students" value={formatNumber(live?.students ?? demoDashboard.students)} hint="PostgreSQL headcount" glyph="student" tone="emerald" />
-          <StatCard label="Teachers" value={formatNumber(live?.teachers ?? live?.staff)} hint="Teaching staff" glyph="teacher" tone="sky" />
-          <StatCard label="Staff members" value={formatNumber(live?.staffMembers ?? live?.staff)} hint="Non-teaching + leadership" glyph="staff" tone="violet" />
-          <StatCard label="Branches" value={formatNumber(branchCount)} hint="Delhi NCR demo campuses" glyph="campus" tone="navy" />
-          <StatCard label="Fee collection" value={formatMoney(live?.feeCollected)} hint={live?.feeTotal != null ? `${formatMoney(live.feeTotal)} billed` : "From invoices"} glyph="fees" tone="gold" />
-          <StatCard label="Attendance" value={live?.attendancePercent != null ? `${live.attendancePercent}%` : "—"} hint={live?.attendanceDate ? `${formatNumber(live.attendancePresent)} / ${formatNumber(live.attendanceMarked)} on ${formatDate(live.attendanceDate)}` : "Latest marked day"} glyph="attendance" tone="rose" />
+
+      {dash.isLoading ? (
+        <Skeleton className="h-36" />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          <StatCard label="Students" value={formatNumber(live?.students ?? (extras ? demoDashboard.students : 0))} hint="On roll" art="student" to="/app/students" />
+          <StatCard label="Teachers" value={formatNumber(live?.teachers ?? live?.staff ?? (extras ? demoDashboard.teachers : 0))} hint="Teaching staff" art="teacher" to="/app/teachers" />
+          <StatCard label="Staff" value={formatNumber(live?.staffMembers ?? live?.staff ?? 0)} hint="Non-teaching" art="staff" to="/app/staff" />
+          <StatCard label="Branches" value={formatNumber(branchCount)} hint="Campuses" art="campus" to="/app/branches" />
+          <StatCard label="Fees collected" value={formatMoney(live?.feeCollected ?? (extras ? demoDashboard.feeCollected : 0))} hint={live?.feeTotal != null ? `${formatMoney(live.feeTotal)} billed` : "Invoices"} art="fees" to="/app/invoices" />
+          <StatCard
+            label="Attendance"
+            value={live?.attendancePercent != null ? `${live.attendancePercent}%` : presentPct != null ? `${presentPct}%` : "—"}
+            hint={live?.attendanceDate ? formatDate(live.attendanceDate) : "Latest marked day"}
+            art="attendance"
+            to="/app/attendance"
+          />
         </div>
       )}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <Card className="portal-chart h-80 xl:col-span-1">
-          <div className="mb-3 flex items-center justify-between"><p className="font-display text-xl text-[#053321]">Student enrollment</p>{charts ? null : <DemoChip show />}</div>
-          <ResponsiveContainer width="100%" height={240}>
+
+      <div>
+        <InsightKicker>Quick actions</InsightKicker>
+        <h2 className="mt-1 font-display text-2xl text-ink-900">School operations</h2>
+        <QuickActions
+          items={[
+            { label: "Add Student", to: "/app/students?action=new" },
+            { label: "New Admission", to: "/app/admissions" },
+            { label: "Take Attendance", to: "/app/attendance" },
+            { label: "Collect Fee", to: "/app/payments" },
+            { label: "Generate Report", to: "/app/reports" },
+            { label: "Send Notice", to: "/app/notices" },
+          ]}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="portal-chart xl:col-span-5">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <InsightKicker>Academics</InsightKicker>
+              <Link to="/app/classes" className="mt-1 block font-display text-xl text-ink-900 hover:text-forest-700 sm:text-2xl">
+                Enrollment by class
+              </Link>
+            </div>
+            {!charts ? <DemoChip show /> : null}
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={enrollment}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf2" />
-              <XAxis dataKey="name" hide={enrollment.length > 10} /><YAxis /><Tooltip />
-              <Bar dataKey="value" name="Students" fill="#12885a" radius={[6, 6, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3E0DA" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} hide={enrollment.length > 12} />
+              <YAxis tick={{ fontSize: 11, fill: "#64748b" }} width={36} axisLine={false} tickLine={false} />
+              <Tooltip cursor={{ fill: "rgba(6,60,50,0.06)" }} contentStyle={{ borderRadius: 0, border: "1px solid #E3E0DA", fontSize: 12 }} />
+              <Bar dataKey="value" name="Students" fill="#15151A" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
-        <Card className="h-80">
-          <div className="mb-3 flex items-center justify-between"><p className="font-semibold">Attendance overview</p>{mix.length ? null : <DemoChip show />}</div>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie data={mix.length ? mix : demoAttendanceMix} dataKey="value" nameKey="name" innerRadius={58} outerRadius={86} paddingAngle={3}>
-                {(mix.length ? mix : demoAttendanceMix).map((s) => <Cell key={s.name} fill={"color" in s ? s.color : "#12885a"} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="h-80">
-          <p className="font-semibold">Fee collection</p>
-          <p className="mt-4 font-display text-4xl">{formatMoney(live?.feeCollected)}</p>
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-gradient-to-r from-forest-600 to-gilt-500" style={{ width: `${Math.min(100, Number(live?.feeTotal) ? (Number(live?.feeCollected) / Number(live?.feeTotal)) * 100 : 0)}%` }} />
+
+        <Card className="portal-chart xl:col-span-4">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <InsightKicker>Attendance</InsightKicker>
+              <Link to="/app/attendance" className="mt-1 block font-display text-xl text-ink-900 hover:text-forest-700 sm:text-2xl">
+                Overview
+              </Link>
+            </div>
+            {!mix.length ? <DemoChip show /> : null}
           </div>
-          <p className="mt-2 text-sm text-slate-500">{formatMoney(live?.feeTotal)} billed · {formatNumber(live?.pendingInvoices)} pending invoices</p>
-        </Card>
-      </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card>
-          <div className="mb-3 flex justify-between"><p className="font-semibold">Recent admissions</p><Link className="text-sm text-forest-700" to="/app/admissions">View</Link></div>
-          {(charts?.recentAdmissions ?? demoAdmissions).map((a) => (
-            <div key={a.id} className="flex items-center justify-between border-b border-slate-100 py-2.5 text-sm">
-              <div><p className="font-medium">{a.name}</p><p className="text-xs text-slate-400">{a.className} · {a.campus}</p></div>
-              <span className="text-xs text-slate-400">{a.when}</span>
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie data={attendanceSlices} dataKey="value" nameKey="name" innerRadius={52} outerRadius={74} paddingAngle={2} stroke="#fff" strokeWidth={2}>
+                  {attendanceSlices.map((s) => (
+                    <Cell key={s.name} fill={"color" in s ? String(s.color) : "#15151A"} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 0, border: "1px solid #E3E0DA", fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <p className="font-display text-2xl text-ink-900 sm:text-[1.75rem]">{presentPct}%</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Present</p>
             </div>
-          ))}
-        </Card>
-        <Card>
-          <div className="mb-3 flex justify-between"><p className="font-semibold">Recent payments</p><Link className="text-sm text-forest-700" to="/app/payments">View</Link></div>
-          {(charts?.recentPayments ?? demoRecentPayments).map((p) => (
-            <div key={p.id} className="flex items-center justify-between border-b border-slate-100 py-2.5 text-sm">
-              <div><p className="font-medium">{p.name}</p><p className="text-xs text-slate-400">{p.when}</p></div>
-              <span className="font-semibold text-forest-700">{typeof p.amount === "number" || /^\d/.test(String(p.amount)) ? formatMoney(p.amount) : p.amount}</span>
-            </div>
-          ))}
-        </Card>
-        <Card>
-          <div className="mb-3 flex justify-between"><p className="font-semibold">Campus notices</p><Link className="text-sm text-forest-700" to="/app/notices">View</Link></div>
-          {(charts?.recentNotices?.length
-            ? charts.recentNotices
-            : extras
-              ? demoEvents.map((e) => ({ id: e.id, title: e.title, when: e.date }))
-              : []
-          ).map((e) => (
-            <div key={e.id} className="flex gap-3 border-b border-slate-100 py-2.5 text-sm">
-              <span className="w-28 shrink-0 font-semibold text-ink-800">{formatDate(e.when) || e.when}</span>
-              <div><p className="font-medium">{e.title}</p></div>
-            </div>
-          ))}
-          {!charts?.recentNotices?.length && !extras ? (
-            <p className="text-sm text-slate-500">No notices returned by the analytics API yet.</p>
-          ) : extras && !charts?.recentNotices?.length ? <DemoChip show /> : null}
-        </Card>
-      </div>
-      <QuickActions items={[
-        { label: "Add student", to: "/app/students" },
-        { label: "Add teacher", to: "/app/teachers" },
-        { label: "Create notice", to: "/app/notices" },
-        { label: "Record payment", to: "/app/payments" },
-        { label: "Add branch", to: "/app/branches" },
-        { label: "Create exam", to: "/app/exams" },
-      ]} />
-      <div className="mt-8">
-        <InsightKicker>Campuses</InsightKicker>
-        <h2 className="mt-2 font-display text-3xl text-[#053321]">Eight Delhi-NCR campuses at a glance</h2>
-        <p className="mt-2 mb-5 max-w-2xl text-sm text-slate-500">Each campus card uses licensed stills stored locally. Headcount on the dashboard comes from PostgreSQL.</p>
-        <CampusMosaic />
-      </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <Card className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Ornament src="/assets/3d/bus.svg" className="h-20 w-32 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2"><p className="font-semibold">Bus tracking</p><span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">Demo tracking</span></div>
-            <p className="mt-2 font-display text-2xl">{bus.code}</p>
-            <p className="text-sm text-slate-500">{bus.route} · {bus.status} · Next {bus.nextStop} · ETA {bus.etaMinutes} min</p>
-            <Link to="/app/bus-tracking" className="mt-3 inline-block text-sm font-semibold text-forest-700">Open map</Link>
           </div>
-        </Card>
-        <Card className="flex items-center gap-4">
-          <StudentFigure />
-          <div>
-            <p className="font-display text-xl text-[#053321]">Campus pulse</p>
-            <p className="mt-1 text-sm text-slate-500">Recent audited actions across the group.</p>
-            <div className="mt-3 flex justify-between text-sm"><span>Recent activity</span><Link className="text-forest-700" to="/app/audit">Audit</Link></div>
-            {(auditQ.data ?? []).slice(0, 2).map((r) => (
-              <p key={r.id} className="text-xs text-slate-400">{r.action} · {formatHumanTime(r.createdAt)}</p>
+          <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs font-semibold text-slate-500">
+            {attendanceSlices.map((s) => (
+              <span key={s.name} className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2" style={{ background: "color" in s ? String(s.color) : "#15151A" }} />
+                {s.name}
+              </span>
             ))}
           </div>
+          <Link to="/app/attendance" className="mt-3 inline-block text-sm font-semibold text-forest-700">
+            Open attendance →
+          </Link>
         </Card>
+
+        <Card className="xl:col-span-3">
+          <InsightKicker>Finance</InsightKicker>
+          <Link to="/app/invoices" className="mt-1 block font-display text-xl text-ink-900 hover:text-forest-700 sm:text-2xl">
+            Fee collection
+          </Link>
+          <p className="mt-4 font-display text-2xl text-ink-900 sm:text-[1.75rem]">{formatMoney(live?.feeCollected)}</p>
+          <div className="mt-4 h-2 overflow-hidden bg-ivory-200">
+            <div className="h-full bg-forest-800 transition-all" style={{ width: `${feePct}%` }} />
+          </div>
+          <p className="mt-2 text-xs font-semibold text-forest-700">{Math.round(feePct)}% of billed</p>
+          <p className="mt-3 text-sm text-slate-500">
+            {formatMoney(live?.feeTotal)} billed · {formatNumber(live?.pendingInvoices)} pending
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Today {formatMoney(live?.todayCollected ?? 0)} · Overdue {formatNumber(live?.overdueInvoices ?? 0)}
+          </p>
+          <Link to="/app/payments" className="mt-5 inline-block text-sm font-semibold text-forest-700">
+            Open payments →
+          </Link>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-12">
+        <Card className="lg:col-span-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <InsightKicker>Activity</InsightKicker>
+              <h2 className="mt-1 font-display text-2xl text-ink-900">Recent</h2>
+            </div>
+            <Link className="text-sm font-semibold text-forest-700" to="/app/audit">
+              Audit
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {activities.length ? (
+              activities.map((row) => (
+                <div key={row.id} className="flex gap-3 border-b border-line/70 pb-3 last:border-0">
+                  <span
+                    className={`mt-1.5 h-2 w-2 shrink-0 ${
+                      row.tone === "good" ? "bg-forest-700" : row.tone === "gold" ? "bg-gilt-500" : "bg-ink-600"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink-900">{row.title}</p>
+                    <p className="text-xs text-slate-400">{row.meta}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-slate-400">{row.when}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">No recent activity.</p>
+            )}
+          </div>
+        </Card>
+
+        <Card className="lg:col-span-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <InsightKicker>Calendar</InsightKicker>
+              <h2 className="mt-1 font-display text-2xl text-ink-900">Upcoming events</h2>
+            </div>
+            <Link className="text-sm font-semibold text-forest-700" to="/app/events">
+              View
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {showEvents.map((e) => (
+              <Link key={e.id ?? e.title} to="/app/events" className="overflow-hidden border border-ink-900/8 bg-surface transition hover:border-forest-600/30">
+                <FieldMedia
+                  src={String(e.title).toLowerCase().includes("sport") ? SCHOOL.sports : SCHOOL.events}
+                  alt=""
+                  frame="thumbnail"
+                  position="center 40%"
+                />
+                <div className="p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-gilt-700">{e.startsAt ? formatHumanTime(e.startsAt) : ""}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink-900">{e.title}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {e.eventType} · {e.audience}
+                  </p>
+                </div>
+              </Link>
+            ))}
+            {!showEvents.length ? (
+              <p className="col-span-full text-sm text-slate-500">
+                No upcoming events. Create one in the Events module.
+              </p>
+            ) : null}
+          </div>
+          <div className="mt-3">
+            <DemoChip show={DEMO_MODE && !liveEvents.length} />
+          </div>
+        </Card>
+
+        <Link to="/about" className="group relative isolate overflow-hidden border border-ink-900/8 lg:col-span-3">
+          <div className="absolute inset-0">
+            <MediaImage
+              src={SCHOOL.dashboardPromo}
+              alt="Students in an Indian classroom"
+              position={SCHOOL_CROP.dashboardPromo}
+              className="h-full w-full transition duration-700 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#15151A]/90 via-[#15151A]/45 to-[#15151A]/20" />
+          <div className="relative flex media-frame-portrait !max-h-[18rem] !aspect-auto min-h-[200px] flex-col justify-end p-4 text-white sm:min-h-[220px] lg:h-full lg:max-h-none lg:p-5">
+            <p className="font-display text-xl leading-tight sm:text-2xl">Education beyond classrooms</p>
+            <p className="mt-1.5 text-xs text-white/75 sm:mt-2 sm:text-sm">Our vision for every campus.</p>
+            <span className="mt-3 inline-flex text-sm font-semibold text-gilt-400 sm:mt-4">Our vision →</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="portal-chart xl:col-span-7">
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <InsightKicker>Branches</InsightKicker>
+              <h2 className="mt-1 font-display text-2xl text-ink-900">Campus comparison</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {branchCompareLive
+                  ? "Enrolment by campus for the current academic year."
+                  : "Relative student load across authorised campuses."}
+              </p>
+            </div>
+            {!branchCompareLive ? <DemoChip show /> : null}
+          </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={branchCompare}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3E0DA" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#64748b" }} width={40} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 0, border: "1px solid #E3E0DA", fontSize: 12 }} />
+              <Bar dataKey="students" name="Students" fill="#26262E" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+        <div className="xl:col-span-5">
+          <InsightKicker>Campuses</InsightKicker>
+          <h2 className="mt-2 mb-4 font-display text-2xl text-ink-900">Delhi-NCR at a glance</h2>
+          <CampusMosaic limit={4} />
+        </div>
       </div>
     </div>
   );
@@ -207,22 +398,30 @@ function CampusDash() {
   const notices = useLiveOrDemo(noticesQ, demoNotices);
   const noticeRows = unwrapList<{ id?: string; title?: string; audienceType?: string; createdAt?: string }>(notices.data).slice(0, 6);
   return (
-    <div>
-      <p className="stat-kicker text-gilt-600">Campus operations</p>
-      <CinematicBanner className="mb-6 mt-2" pathname="/app/dashboard" title={greeting(user?.fullName)} subtitle={`${user?.branchName ?? "Campus"} · live counts from PostgreSQL`} showImage />
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Students" value={formatNumber(dash.data?.students)} />
-        <StatCard label="Staff" value={formatNumber(dash.data?.staff)} />
-        <StatCard label="Pending fees" value={formatNumber(dash.data?.pendingInvoices)} tone="gold" />
-        <StatCard label="Attendance" value={dash.data?.attendancePercent != null ? `${dash.data.attendancePercent}%` : `${demoDashboard.attendanceToday}%`} hint={dash.data?.attendanceDate ? formatDate(dash.data.attendanceDate) : "Latest marked day"} tone="rose" />
+    <div className="space-y-6">
+      <DashHero
+        kicker="Campus operations"
+        title={greeting(user?.fullName)}
+        body={`${user?.branchName ?? "Campus"} · live counts from PostgreSQL`}
+        dataFirst
+      />
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+        <StatCard label="Students" value={formatNumber(dash.data?.students)} art="student" to="/app/students" />
+        <StatCard label="Staff" value={formatNumber(dash.data?.staff)} art="staff" to="/app/staff" />
+        <StatCard label="Pending fees" value={formatNumber(dash.data?.pendingInvoices)} art="fees" to="/app/pending-fees" />
+        <StatCard label="Attendance" value={dash.data?.attendancePercent != null ? `${dash.data.attendancePercent}%` : dash.isDemo ? `${demoDashboard.attendanceToday}%` : "—"} hint={dash.data?.attendanceDate ? formatDate(dash.data.attendanceDate) : "Latest marked day"} art="attendance" to="/app/attendance" />
       </div>
-      <div className="mt-6">
-        <ActivityFeed
-          title="Campus notices"
-          rows={noticeRows.map((n) => ({ id: n.id ?? n.title ?? "n", title: n.title ?? "Notice", meta: n.audienceType, when: n.createdAt }))}
-          action={notices.isDemo ? <DemoChip show /> : undefined}
-        />
-      </div>
+      <ActivityFeed
+        title="Campus notices"
+        rows={noticeRows.map((n) => ({
+          id: n.id ?? n.title ?? "n",
+          title: n.title ?? "Notice",
+          meta: n.audienceType,
+          when: n.createdAt,
+          href: "/app/notices",
+        }))}
+        action={notices.isDemo ? <DemoChip show /> : undefined}
+      />
       <QuickActions items={[
         { label: "Mark attendance", to: "/app/attendance" },
         { label: "Notices", to: "/app/notices" },
@@ -243,20 +442,34 @@ function PrincipalDash() {
   const notices = useLiveOrDemo(noticesQ, demoNotices);
   const examsQ = useQuery({ queryKey: ["exams"], queryFn: () => api<ExamRow[]>("/api/exams") });
   const exams = useLiveOrDemo(examsQ, demoExams);
+  const taskSummary = useQuery({
+    queryKey: ["teacher-tasks-summary"],
+    queryFn: () => api<{ todo: number; inProgress: number; completed: number; overdue: number }>("/api/teacher-tasks/summary"),
+  });
   return (
-    <div>
-      <p className="stat-kicker text-gilt-600">Principal desk</p>
-      <CinematicBanner className="mb-6 mt-2" pathname="/app/dashboard" title={greeting(user?.fullName)} subtitle="Academic and pastoral operations for your campus." showImage />
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Students" value={formatNumber(dash.data?.students)} />
-        <StatCard label="Attendance" value={dash.data?.attendancePercent != null ? `${dash.data.attendancePercent}%` : `${demoDashboard.attendanceToday}%`} hint={dash.data?.attendanceDate ? formatDate(dash.data.attendanceDate) : "Latest marked day"} tone="rose" />
-        <StatCard label="Staff on roll" value={formatNumber(dash.data?.staff)} tone="sky" />
-        <StatCard label="Pending fees" value={formatNumber(dash.data?.pendingInvoices)} tone="gold" />
+    <div className="space-y-6">
+      <DashHero
+        kicker="Principal desk"
+        title={greeting(user?.fullName)}
+        body="Today's attendance, teacher work and campus approvals."
+        dataFirst
+      />
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+        <StatCard label="Students" value={formatNumber(dash.data?.students)} art="student" to="/app/students" />
+        <StatCard label="Student attendance" value={dash.data?.attendancePercent != null ? `${dash.data.attendancePercent}%` : dash.isDemo ? `${demoDashboard.attendanceToday}%` : "—"} hint={dash.data?.attendanceDate ? formatDate(dash.data.attendanceDate) : "Latest marked day"} art="attendance" to="/app/attendance" />
+        <StatCard label="Teacher tasks" value={formatNumber((taskSummary.data?.todo ?? 0) + (taskSummary.data?.inProgress ?? 0))} hint={`${taskSummary.data?.overdue ?? 0} overdue`} art="homework" to="/app/tasks" />
+        <StatCard label="Pending fees" value={formatNumber(dash.data?.pendingInvoices)} art="fees" to="/app/pending-fees" />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <ActivityFeed
           title="Upcoming exams"
-          rows={(exams.data ?? []).slice(0, 5).map((e) => ({ id: e.id, title: e.name, meta: e.examType ?? "Assessment", when: e.startDate }))}
+          rows={(exams.data ?? []).slice(0, 5).map((e) => ({
+            id: e.id,
+            title: e.name,
+            meta: e.examType ?? "Assessment",
+            when: e.startDate,
+            href: "/app/exams",
+          }))}
           action={exams.isDemo ? <DemoChip show /> : undefined}
         />
         <ActivityFeed
@@ -265,16 +478,17 @@ function PrincipalDash() {
             id: n.id ?? n.title ?? "n",
             title: n.title ?? "Notice",
             meta: n.audienceType,
+            href: "/app/notices",
           }))}
         />
       </div>
       <QuickActions items={[
-        { label: "Pending approvals", to: "/app/leave-approvals" },
+        { label: "Assign teacher task", to: "/app/tasks" },
+        { label: "Staff attendance", to: "/app/staff-attendance" },
+        { label: "Review papers", to: "/app/study-materials" },
+        { label: "Leave approvals", to: "/app/leave-approvals" },
         { label: "Homework", to: "/app/homework" },
-        { label: "Complaints", to: "/app/complaints" },
-        { label: "Students", to: "/app/students" },
         { label: "Results", to: "/app/results" },
-        { label: "PTM", to: "/app/ptm" },
       ]} />
     </div>
   );
@@ -283,67 +497,270 @@ function PrincipalDash() {
 function TeacherDash() {
   const { user } = useAuth();
   const today = ((new Date().getDay() + 6) % 7) + 1;
-  const yearsQ = useQuery({ queryKey: ["years"], queryFn: () => api<AcademicYear[]>("/api/academic-years") });
-  const years = useLiveOrDemo(yearsQ, demoYears);
-  const yearId = years.data?.[0]?.id ?? "";
-  const skipYear = !yearId || yearId.startsWith("demo-");
-  const ttQ = useQuery({
-    queryKey: ["timetable", yearId],
-    enabled: Boolean(yearId) && !skipYear,
-    queryFn: () => api<unknown[]>(`/api/timetable?academicYearId=${yearId}`),
+  const desk = useQuery({
+    queryKey: ["teacher-desk"],
+    queryFn: () =>
+      api<{
+        assignments: Array<{ id: string; subject: string; className: string; sectionName: string; sectionId: string }>;
+        timetable: unknown[];
+        homework: unknown[];
+        students: unknown[];
+      }>("/api/staff/me/workspace"),
   });
-  const slots = useLiveOrDemo(ttQ, demoTimetable);
-  const hwQ = useQuery({ queryKey: ["homework"], queryFn: () => api<unknown[]>("/api/homework") });
-  const homework = useLiveOrDemo(hwQ, demoHomework);
+  const taskSummary = useQuery({
+    queryKey: ["teacher-tasks-summary"],
+    queryFn: () => api<{ todo: number; inProgress: number; overdue: number }>("/api/teacher-tasks/summary"),
+  });
   const examsQ = useQuery({ queryKey: ["exams"], queryFn: () => api<ExamRow[]>("/api/exams") });
-  const exams = useLiveOrDemo(examsQ, demoExams);
-  const rows = unwrapList(slots.data);
-  const periods = rows.filter((r) => Number(asRecord(r).dayOfWeek ?? 1) === today);
-  const shown = periods.length ? periods : rows.filter((r) => Number(asRecord(r).dayOfWeek ?? 1) === 1);
-  const hwRows = unwrapList(homework.data);
+  const papers = useQuery({
+    queryKey: ["study-papers-desk"],
+    queryFn: () => api<Array<{ id: string; title: string; status: string }>>("/api/study-papers"),
+  });
+  const notices = useQuery({ queryKey: ["notices"], queryFn: () => api<unknown[]>("/api/notices") });
+  const unread = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => api<{ count: number }>("/api/notifications/unread-count"),
+  });
+  const slots = unwrapList(desk.data?.timetable);
+  const periods = slots.filter((r) => Number(asRecord(r).dayOfWeek ?? 1) === today);
+  const shown = periods.length ? periods : slots;
+  const hwRows = unwrapList(desk.data?.homework);
+  const assigns = desk.data?.assignments ?? [];
+  const draftPapers = (papers.data ?? []).filter((p) => p.status === "DRAFT" || p.status === "SUBMITTED" || p.status === "REJECTED");
+  const openExams = (examsQ.data ?? []).filter((e) => e.status !== "PUBLISHED");
   return (
-    <div>
-      <PageHeader title={greeting(user?.fullName)} subtitle="Your classes, timetable and marking queue." action={<Link to="/app/attendance"><Button>Mark attendance</Button></Link>} />
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Today's periods" value={shown.length} />
-        <StatCard label="Homework out" value={hwRows.length} tone="sky" />
-        <StatCard label="Upcoming exam" value={exams.data?.[0]?.name ?? "—"} tone="gold" />
+    <div className="space-y-6">
+      <DashHero
+        kicker="Teaching desk"
+        title={greeting(user?.fullName)}
+        body="Today's classes, assigned sections, tasks, homework and papers."
+        dataFirst
+        aside={
+          <Link to="/app/attendance" className="inline-flex border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15">
+            Mark attendance
+          </Link>
+        }
+      />
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Today's periods" value={shown.length} art="timetable" to="/app/timetable" />
+        <StatCard label="Sections" value={assigns.length} art="student" to="/app/classes" />
+        <StatCard label="My tasks" value={formatNumber((taskSummary.data?.todo ?? 0) + (taskSummary.data?.inProgress ?? 0))} hint={`${taskSummary.data?.overdue ?? 0} overdue`} art="homework" to="/app/tasks" />
+        <StatCard label="Homework" value={hwRows.length} art="homework" to="/app/homework" />
+        <StatCard label="Papers pending" value={draftPapers.length} art="exam" to="/app/study-materials" />
+        <StatCard label="Unread alerts" value={formatNumber(unread.data?.count)} art="homework" to="/app/notifications" />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card>
-          <div className="mb-3 flex items-center justify-between">
-            <p className="font-semibold text-[#053321]">Today's timetable</p>
-            {slots.isDemo ? <DemoChip show /> : null}
-          </div>
-          {slots.isLoading ? <Skeleton className="h-40" /> : shown.length === 0 ? (
-            <EmptyState title="No periods today" body="Timetable slots appear after the academic year schedule is published." />
-          ) : shown.map((t, i) => {
+          <Link to="/app/classes" className="font-display text-xl text-ink-900 hover:text-forest-700">Assigned sections</Link>
+          {desk.isLoading ? <Skeleton className="mt-3 h-28" /> : assigns.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">No teacher assignments yet. Admin must map you to a class/section/subject.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {assigns.slice(0, 8).map((a) => (
+                <li key={a.id} className="flex justify-between border-b border-line/60 py-2 text-sm">
+                  <span className="font-medium">{a.className}-{a.sectionName}</span>
+                  <span className="text-slate-400">{a.subject}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card>
+          <Link to="/app/timetable" className="font-display text-xl text-ink-900 hover:text-forest-700">Today's timetable</Link>
+          {desk.isLoading ? <Skeleton className="mt-3 h-28" /> : shown.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">No periods scheduled for today.</p>
+          ) : shown.slice(0, 8).map((t, i) => {
             const rec = asRecord(t);
             return (
-              <p key={str(rec.id, String(i))} className="flex justify-between border-b border-slate-100 py-2.5 text-sm">
+              <div key={str(rec.id, String(i))} className="flex justify-between border-b border-line/60 py-2 text-sm">
                 <span className="font-medium">{str(rec.startTime)} · {asName(rec.subject) || "Subject"}</span>
                 <span className="text-slate-400">{str(rec.room, "Room TBA")}</span>
-              </p>
+              </div>
             );
           })}
         </Card>
-        <ActivityFeed
-          title="Homework queue"
-          rows={hwRows.slice(0, 6).map((h, i) => {
+        <Card>
+          <Link to="/app/homework" className="font-display text-xl text-ink-900 hover:text-forest-700">Homework queue</Link>
+          {hwRows.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">No homework published yet.</p>
+          ) : hwRows.slice(0, 6).map((h, i) => {
             const rec = asRecord(h);
-            return { id: str(rec.id, String(i)), title: str(rec.title, "Homework"), meta: asName(rec.subject), when: str(rec.dueDate) };
+            return (
+              <div key={str(rec.id, String(i))} className="border-b border-line/60 py-2 text-sm">
+                <p className="font-medium">{str(rec.title)}</p>
+                <p className="text-xs text-slate-400">{asName(rec.subject)} · due {str(rec.dueDate)}</p>
+              </div>
+            );
           })}
-          action={homework.isDemo ? <DemoChip show /> : undefined}
+        </Card>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ActivityFeed
+          title="Upcoming exams"
+          rows={openExams.slice(0, 5).map((e) => ({
+            id: e.id,
+            title: e.name,
+            meta: e.status,
+            when: e.startDate,
+            href: "/app/exams",
+          }))}
+        />
+        <ActivityFeed
+          title="Notices"
+          rows={unwrapList<{ id?: string; title?: string; audienceType?: string }>(notices.data).slice(0, 5).map((n) => ({
+            id: n.id ?? n.title ?? "n",
+            title: n.title ?? "Notice",
+            meta: n.audienceType,
+            href: "/app/notices",
+          }))}
         />
       </div>
       <QuickActions items={[
+        { label: "My tasks", to: "/app/tasks" },
         { label: "Create homework", to: "/app/homework" },
         { label: "Enter marks", to: "/app/marks" },
-        { label: "My students", to: "/app/students" },
-        { label: "Timetable", to: "/app/timetable" },
-        { label: "Study materials", to: "/app/study-materials" },
-        { label: "PTM", to: "/app/ptm" },
+        { label: "Question papers", to: "/app/study-materials" },
+        { label: "Mark attendance", to: "/app/attendance" },
+        { label: "My attendance", to: "/app/staff-attendance" },
       ]} />
+    </div>
+  );
+}
+
+type FleetRow = {
+  id: string;
+  registrationNumber?: string;
+  vehicleType?: string;
+  capacity?: number;
+  status?: string;
+};
+
+type DriverRow = { id: string; fullName?: string; licenseNumber?: string; mobile?: string; status?: string };
+
+type RouteRow = { id: string; name?: string; vehicleNumber?: string; driverName?: string; status?: string };
+
+/**
+ * Fleet command centre for the TRANSPORT role.
+ *
+ * Deliberately narrow: this role has no academic or financial reach, so the
+ * dashboard only surfaces what it can actually act on. Every query here is one
+ * the server permits for TRANSPORT - see PermissionMatrix.
+ */
+function TransportDash() {
+  const { user } = useAuth();
+  const vehiclesQ = useQuery({
+    queryKey: ["transport-vehicles"],
+    queryFn: () => api<FleetRow[]>("/api/transport/vehicles"),
+  });
+  const driversQ = useQuery({
+    queryKey: ["transport-drivers"],
+    queryFn: () => api<DriverRow[]>("/api/transport/drivers"),
+  });
+  const routesQ = useQuery({
+    queryKey: ["transport-routes"],
+    queryFn: () => api<RouteRow[]>("/api/transport/routes"),
+  });
+
+  const vehicles = vehiclesQ.data ?? [];
+  const drivers = driversQ.data ?? [];
+  const routes = routesQ.data ?? [];
+
+  const active = vehicles.filter((v) => v.status !== "RETIRED");
+  const onRoad = active.filter((v) => v.status === "ACTIVE").length;
+  const outOfService = active.length - onRoad;
+  const seats = active.reduce((sum, v) => sum + (v.capacity ?? 0), 0);
+  const unassigned = routes.filter((r) => !r.vehicleNumber || !r.driverName);
+
+  const loading = vehiclesQ.isLoading || driversQ.isLoading || routesQ.isLoading;
+  const failed = vehiclesQ.isError || driversQ.isError || routesQ.isError;
+
+  return (
+    <div className="space-y-6">
+      <DashHero
+        kicker="Transport control"
+        title={greeting(user?.fullName)}
+        body="Vehicles, drivers, routes and daily trips for the campus fleet."
+        image={SCHOOL.transportFleet}
+        position={SCHOOL_CROP.bus}
+        aside={
+          <div className="rounded-2xl border border-white/15 bg-ink-950/55 p-5 backdrop-blur-md">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gilt-400">Today</p>
+            <ul className="mt-3 space-y-2 text-sm text-white/85">
+              <li className="flex justify-between gap-6 border-b border-white/10 pb-2">
+                <span>Buses on road</span>
+                <span className="font-semibold text-gilt-400">{formatNumber(onRoad)}</span>
+              </li>
+              <li className="flex justify-between gap-6 border-b border-white/10 pb-2">
+                <span>Routes</span>
+                <span className="font-semibold">{formatNumber(routes.length)}</span>
+              </li>
+              <li className="flex justify-between gap-6">
+                <span>Drivers</span>
+                <span className="font-semibold">{formatNumber(drivers.length)}</span>
+              </li>
+            </ul>
+          </div>
+        }
+      />
+
+      {failed ? <ErrorState message="Fleet data is unavailable right now. Please try again shortly." /> : null}
+
+      {loading ? (
+        <Skeleton className="h-28" />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Buses on road" value={formatNumber(onRoad)} hint="Marked active" art="bus" to="/app/transport" />
+          <StatCard label="Out of service" value={formatNumber(outOfService)} hint="Needs attention" art="bus" to="/app/transport" />
+          <StatCard label="Routes" value={formatNumber(routes.length)} hint="Configured" art="transport" to="/app/transport" />
+          <StatCard label="Seats" value={formatNumber(seats)} hint="Total capacity" art="student" to="/app/transport" />
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Card>
+          <p className="font-display text-xl text-ink-900">Routes needing a vehicle or driver</p>
+          <p className="mt-1 text-sm text-slate-500">Assign before the next trip is scheduled.</p>
+          {unassigned.length === 0 ? (
+            <EmptyState title="Every route is crewed" body="All configured routes have a vehicle and a driver assigned." />
+          ) : (
+            <ul className="mt-4 divide-y divide-line">
+              {unassigned.slice(0, 6).map((r) => (
+                <li key={r.id} className="flex items-center justify-between gap-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-ink-900">{r.name ?? "Unnamed route"}</p>
+                    <p className="text-xs text-slate-500">
+                      {r.vehicleNumber ? `Vehicle ${r.vehicleNumber}` : "No vehicle"} ·{" "}
+                      {r.driverName ? r.driverName : "No driver"}
+                    </p>
+                  </div>
+                  <Link to="/app/transport" className="shrink-0 text-sm font-semibold text-forest-700 hover:underline">
+                    Assign
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <ActivityFeed
+          title="Fleet"
+          rows={active.slice(0, 8).map((v) => ({
+            id: v.id,
+            title: v.registrationNumber ?? "Vehicle",
+            meta: `${v.vehicleType ?? "BUS"} · ${v.capacity ?? "-"} seats`,
+            when: v.status ?? "",
+          }))}
+        />
+      </div>
+
+      <QuickActions
+        items={[
+          { label: "Bus tracking", to: "/app/bus-tracking" },
+          { label: "Routes & stops", to: "/app/transport" },
+          { label: "Notices", to: "/app/notices" },
+          { label: "My leave", to: "/app/leave" },
+        ]}
+      />
     </div>
   );
 }
@@ -354,24 +771,38 @@ function AccountantDash() {
   const analyticsQ = useQuery({ queryKey: ["dashboard-analytics"], queryFn: () => api<DashboardAnalytics>("/api/dashboard/analytics") });
   const payments = analyticsQ.data?.recentPayments ?? [];
   return (
-    <div>
-      <PageHeader title="Finance desk" subtitle="Collections and overdue counts come from PostgreSQL. Trend chart is labelled demo until a time-series API exists." />
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Pending invoices" value={formatNumber(dash.data?.pendingInvoices)} tone="gold" />
-        <StatCard label="Fee collected" value={formatMoney(dash.data?.feeCollected)} hint={dash.data?.feeTotal != null ? `${formatMoney(dash.data.feeTotal)} billed` : "Live when API returns totals"} />
-        <StatCard label="Today's collection" value={formatMoney(dash.data?.todayCollected ?? 0)} hint="Gateway payments recorded today" tone="sky" />
-        <StatCard label="Overdue invoices" value={formatNumber(dash.data?.overdueInvoices ?? 0)} hint="Pending or partial past due date" tone="rose" />
+    <div className="space-y-6">
+      <DashHero
+        kicker="Finance desk"
+        title="Collections overview"
+        body="Invoices, collections and outstanding fees from PostgreSQL."
+        dataFirst
+      />
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+        <StatCard label="Pending invoices" value={formatNumber(dash.data?.pendingInvoices)} art="fees" to="/app/pending-fees" />
+        <StatCard label="Fee collected" value={formatMoney(dash.data?.feeCollected)} hint={dash.data?.feeTotal != null ? `${formatMoney(dash.data.feeTotal)} billed` : "Live when API returns totals"} art="fees" to="/app/invoices" />
+        <StatCard label="Today's collection" value={formatMoney(dash.data?.todayCollected ?? 0)} hint="Gateway payments recorded today" art="report" to="/app/payments" />
+        <StatCard label="Overdue invoices" value={formatNumber(dash.data?.overdueInvoices ?? 0)} hint="Pending or partial past due date" art="fees" to="/app/pending-fees" />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Card className="h-80">
-          <div className="mb-3 flex items-center justify-between"><p className="font-semibold text-[#053321]">Collection trend</p><DemoChip show /></div>
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Card className="portal-chart h-80">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="font-display text-xl text-ink-900">Collection trend</p>
+            {DEMO_MODE ? <DemoChip show /> : null}
+          </div>
+          {DEMO_MODE ? (
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={collectionTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e6ebf2" />
-              <XAxis dataKey="name" /><YAxis /><Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#14663a" strokeWidth={3} dot={false} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E3E0DA" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 0, border: "1px solid #E3E0DA", fontSize: 12 }} />
+              <Line type="monotone" dataKey="value" stroke="#15151A" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
+          ) : (
+            <p className="pt-8 text-sm text-slate-500">No fee time-series API yet. Recent payments below use live dashboard analytics when available.</p>
+          )}
         </Card>
         <ActivityFeed
           title="Recent payments"
@@ -399,11 +830,19 @@ function ParentDash() {
     enabled: Boolean(selected?.id) && !selected?.id.startsWith("demo-"),
     queryFn: () => api<StudentWorkspace>(`/api/students/${selected!.id}/workspace`),
   });
-  const bus = demoBuses[0];
+  const transport = pack.data?.transport?.[0];
+  const loadingStats = pack.isLoading || pack.isFetching;
   return (
-    <div>
-      <PageHeader title={greeting(user?.fullName)} subtitle="Follow every child from one family workspace." />
-      {isDemo ? <p className="mb-4 text-sm text-amber-800">Showing demo children because no linked students were returned by the API.</p> : null}
+    <div className="space-y-6">
+      <DashHero
+        kicker="Family workspace"
+        title={greeting(user?.fullName)}
+        body="Follow every child from one place — attendance, homework, fees and transport."
+        image={SCHOOL.studentsGroup}
+        position="center 30%"
+      />
+      {isDemo ? <p className="text-sm text-amber-800">Demo children — shown only because DEMO_MODE is enabled and the API returned no linked students.</p> : null}
+      {!isDemo && pack.isError ? <ErrorState message="Could not load student workspace." onRetry={() => pack.refetch()} status={(pack.error as { status?: number })?.status} /> : null}
       <div className="grid gap-4 md:grid-cols-2">
         {children.map((c) => (
           <PersonCard
@@ -417,19 +856,32 @@ function ParentDash() {
           />
         ))}
       </div>
-      {selected ? (
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-        <StatCard label="Attendance" value={pack.data ? `${pack.data.attendance.percentage}%` : `${demoAttendance.percentage}%`} />
-        <StatCard label="Pending homework" value={pack.data?.homework.length ?? (pack.isFetched ? 0 : demoHomework.length)} tone="sky" />
-        <StatCard label="Next exam" value={pack.data?.exams[0]?.name ?? (pack.isFetched ? "—" : demoExams[0]?.name ?? "—")} tone="gold" />
-        <StatCard label="Pending fees" value={(pack.data?.invoices ?? (pack.isFetched ? [] : demoInvoices)).filter((i) => i.status !== "PAID").length} tone="rose" />
+      {!children.length && !isDemo ? <EmptyState title="No linked students" body="Ask the school office to link your guardian account to a student." /> : null}
+      {selected && !pack.isError ? (
+        <div className="grid gap-3 md:grid-cols-4">
+          <StatCard label="Attendance" value={loadingStats ? "…" : pack.data ? `${pack.data.attendance.percentage}%` : "—"} art="attendance" to="/app/attendance" />
+          <StatCard label="Pending homework" value={loadingStats ? "…" : pack.data?.homework.length ?? 0} art="homework" to="/app/homework" />
+          <StatCard label="Next exam" value={loadingStats ? "…" : pack.data?.exams[0]?.name ?? "—"} art="exam" to="/app/exams" />
+          <StatCard label="Pending fees" value={loadingStats ? "…" : (pack.data?.invoices ?? []).filter((i) => i.status !== "PAID").length} art="fees" to="/app/pending-fees" />
         </div>
       ) : null}
-      <Card className="mt-6 flex items-center gap-4">
-        <Ornament src="/assets/3d/bus.svg" className="h-16 w-28" />
+      <Card className="flex items-center gap-4">
+        <div className="h-14 w-14 shrink-0">
+          <Premium3DIcon kind="bus" size={56} />
+        </div>
         <div>
-          <div className="flex items-center gap-2"><p className="font-semibold">School bus</p><span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">Demo tracking</span></div>
-          <p className="mt-1 text-sm text-slate-500">{bus.code} · {bus.route} · ETA {bus.etaMinutes} min</p>
+          <p className="font-semibold text-ink-900">School bus</p>
+          {loadingStats ? (
+            <p className="mt-1 text-sm text-slate-500">Loading transport…</p>
+          ) : transport ? (
+            <p className="mt-1 text-sm text-slate-500">
+              {transport.route} · Stop {transport.stop}
+              {transport.vehicle ? ` · ${transport.vehicle}` : ""}
+              {transport.driver ? ` · Driver ${transport.driver}` : ""}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-slate-500">No transport assignment on file for this student.</p>
+          )}
         </div>
       </Card>
       <QuickActions items={[
@@ -454,26 +906,38 @@ function StudentDash() {
     queryFn: () => api<StudentWorkspace>(`/api/students/${selected!.id}/workspace`),
   });
   const today = ((new Date().getDay() + 6) % 7) + 1;
-  const periods = (pack.data?.timetable ?? []).filter((t) => t.dayOfWeek === today);
+  const periods = (pack.data?.timetable ?? []).filter((slot) => slot.dayOfWeek === today);
+  const loadingStats = pack.isLoading || pack.isFetching;
+  const timetableRows = periods.length ? periods : (pack.data?.timetable ?? []).slice(0, 4);
+  const homeworkRows = pack.data?.homework ?? [];
   return (
-    <div>
-      <CinematicBanner className="mb-6" pathname="/app/students" title={greeting(name)} subtitle={`${selected?.className ?? ""} ${selected?.sectionName ?? ""} · ${SCHOOL_NAME}`} showImage />
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Attendance" value={pack.data ? `${pack.data.attendance.percentage}%` : `${demoAttendance.percentage}%`} />
-        <StatCard label="Next class" value={periods[0]?.subject ?? pack.data?.timetable[0]?.subject ?? "—"} hint={periods[0] ? `${periods[0].startTime} · ${periods[0].room}` : "No period today"} />
-        <StatCard label="Pending homework" value={pack.data?.homework.length ?? (pack.isFetched ? 0 : demoHomework.length)} />
-        <StatCard label="Library books" value={pack.data?.library.length ?? 0} />
+    <div className="space-y-6">
+      <DashHero
+        kicker="Student desk"
+        title={greeting(name)}
+        body={`${selected?.className ?? ""} ${selected?.sectionName ?? ""} · ${SCHOOL_NAME}`.trim()}
+        image={SCHOOL.studentsUniform}
+        position="center 30%"
+      />
+      {pack.isError ? <ErrorState message="Could not load your workspace." onRetry={() => pack.refetch()} status={(pack.error as { status?: number })?.status} /> : null}
+      <div className="grid gap-3 md:grid-cols-4">
+        <StatCard label="Attendance" value={loadingStats ? "…" : pack.data ? `${pack.data.attendance.percentage}%` : "—"} art="attendance" to="/app/attendance" />
+        <StatCard label="Next class" value={loadingStats ? "…" : periods[0]?.subject ?? pack.data?.timetable[0]?.subject ?? "—"} hint={periods[0] ? `${periods[0].startTime} · ${periods[0].room}` : "No period today"} art="timetable" to="/app/timetable" />
+        <StatCard label="Pending homework" value={loadingStats ? "…" : homeworkRows.length} art="homework" to="/app/homework" />
+        <StatCard label="Library books" value={loadingStats ? "…" : pack.data?.library.length ?? 0} art="library" to="/app/library" />
       </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <Card>
-          <p className="mb-3 font-semibold text-[#053321]">Today's classes</p>
-          {(periods.length ? periods : pack.data?.timetable.slice(0, 4) ?? demoTimetable.filter((t) => t.dayOfWeek === 1)).map((t) => (
-            <p key={t.id} className="flex justify-between py-2.5 text-sm"><span className="font-medium">{t.startTime} · {t.subject}</span><span className="text-slate-400">{t.room}</span></p>
+          <p className="mb-3 font-display text-xl text-ink-900">Today&apos;s classes</p>
+          {loadingStats ? <Skeleton className="h-24" /> : null}
+          {!loadingStats && !timetableRows.length ? <p className="text-sm text-slate-500">No timetable slots for today.</p> : null}
+          {timetableRows.map((slot) => (
+            <p key={slot.id} className="flex justify-between border-b border-line/70 py-2.5 text-sm"><span className="font-medium">{slot.startTime} · {slot.subject}</span><span className="text-slate-400">{slot.room}</span></p>
           ))}
         </Card>
         <ActivityFeed
           title="Homework"
-          rows={(pack.data?.homework?.length ? pack.data.homework : pack.isFetched ? [] : demoHomework).map((h) => ({ id: h.id, title: h.title, meta: h.subject, when: h.dueDate }))}
+          rows={homeworkRows.map((h) => ({ id: h.id, title: h.title, meta: h.subject, when: h.dueDate }))}
         />
       </div>
       <QuickActions items={[

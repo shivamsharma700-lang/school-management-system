@@ -6,6 +6,6 @@ export const demoFeeStructures: FeeStructure[] = [
 ];
 
 export const demoInvoices: Invoice[] = [
-  { id: "demo-inv-1", invoiceNumber: "INV-DPS-24081", studentId: "demo-st-aarav", totalAmount: 48500, paidAmount: 48500, status: "PAID", dueDate: "2026-07-15" },
-  { id: "demo-inv-2", invoiceNumber: "INV-DPS-24102", studentId: "demo-st-aarav", totalAmount: 24250, paidAmount: 0, status: "PENDING", dueDate: "2026-10-15" },
+  { id: "demo-inv-1", invoiceNumber: "INV-TWHPS-24081", studentId: "demo-st-aarav", totalAmount: 48500, paidAmount: 48500, status: "PAID", dueDate: "2026-07-15" },
+  { id: "demo-inv-2", invoiceNumber: "INV-TWHPS-24102", studentId: "demo-st-aarav", totalAmount: 24250, paidAmount: 0, status: "PENDING", dueDate: "2026-10-15" },
 ];

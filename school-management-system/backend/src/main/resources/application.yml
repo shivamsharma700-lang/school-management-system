@@ -7,6 +7,29 @@ spring:
     multipart:
       max-file-size: ${FILE_MAX_SIZE_MB:10}MB
       max-request-size: ${FILE_MAX_SIZE_MB:10}MB
+  mvc:
+    # Raise NoHandlerFoundException so GlobalExceptionHandler can answer 404
+    # instead of letting unmatched routes fall through to the 500 catch-all.
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      # No static resources are served from the API; without this the resource
+      # handler swallows unmatched paths before the exception can be raised.
+      add-mappings: false
+  datasource:
+    hikari:
+      # Long-lived local runs previously had no bounds here. Recycling below
+      # PostgreSQL's own idle/session limits keeps the pool from handing out
+      # a connection the server has already dropped.
+      maximum-pool-size: ${DB_POOL_MAX:12}
+      minimum-idle: ${DB_POOL_MIN:2}
+      connection-timeout: 20000
+      validation-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 900000
+      keepalive-time: 120000
+      leak-detection-threshold: 30000
+      connection-test-query: SELECT 1
   jpa:
     open-in-view: false
     hibernate:
@@ -22,6 +45,8 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Finish in-flight requests instead of cutting them off on stop.
+  shutdown: graceful
   error:
     include-stacktrace: never
     include-message: never
@@ -39,6 +64,11 @@ app:
   payment:
     secret: ${PAYMENT_SECRET:dev-only-change-me}
     provider: ${PAYMENT_PROVIDER:mock}
+  bootstrap:
+    enabled: false
+  seed:
+    enabled: false
+    volume: false
 
 logging:
   level:

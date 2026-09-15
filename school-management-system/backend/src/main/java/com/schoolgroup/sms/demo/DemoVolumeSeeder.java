@@ -8,6 +8,7 @@ import com.schoolgroup.sms.service.DevDataSeeder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
  * Disabled in test/prod. Safe to delete this class to remove volume seeding.
  */
 @Component
+@Profile({"dev", "test"})
 @Order(2)
 public class DemoVolumeSeeder implements CommandLineRunner {
 

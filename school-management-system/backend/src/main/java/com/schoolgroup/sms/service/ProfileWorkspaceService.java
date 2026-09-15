@@ -1,5 +1,6 @@
 package com.schoolgroup.sms.service;
 
+import com.schoolgroup.sms.entity.CampusRecord;
 import com.schoolgroup.sms.entity.Homework;
 import com.schoolgroup.sms.entity.Invoice;
 import com.schoolgroup.sms.entity.LeaveRequest;
@@ -12,6 +13,8 @@ import com.schoolgroup.sms.entity.TimetableSlot;
 import com.schoolgroup.sms.exception.ApiException;
 import com.schoolgroup.sms.repository.AcademicYearRepository;
 import com.schoolgroup.sms.repository.BookLoanRepository;
+import com.schoolgroup.sms.repository.CampusRecordRepository;
+import com.schoolgroup.sms.repository.GuardianStudentRepository;
 import com.schoolgroup.sms.repository.HomeworkRepository;
 import com.schoolgroup.sms.repository.InvoiceRepository;
 import com.schoolgroup.sms.repository.LeaveRequestRepository;
@@ -50,13 +53,16 @@ public class ProfileWorkspaceService {
     private final TimetableSlotRepository timetable;
     private final TeacherAssignmentRepository assignments;
     private final AcademicYearRepository years;
+    private final GuardianStudentRepository guardianLinks;
+    private final CampusRecordRepository campusRecords;
 
     public ProfileWorkspaceService(AccessService access, StudentRepository students, StaffRepository staff,
                                    StudentAttendanceRepository attendance, HomeworkRepository homework,
                                    InvoiceRepository invoices, MarkRepository marks, BookLoanRepository loans,
                                    StudentTransportRepository transports, LeaveRequestRepository leaves,
                                    TimetableSlotRepository timetable, TeacherAssignmentRepository assignments,
-                                   AcademicYearRepository years) {
+                                   AcademicYearRepository years, GuardianStudentRepository guardianLinks,
+                                   CampusRecordRepository campusRecords) {
         this.access = access;
         this.students = students;
         this.staff = staff;
@@ -70,6 +76,8 @@ public class ProfileWorkspaceService {
         this.timetable = timetable;
         this.assignments = assignments;
         this.years = years;
+        this.guardianLinks = guardianLinks;
+        this.campusRecords = campusRecords;
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +86,19 @@ public class ProfileWorkspaceService {
         List<StudentAttendance> rows = attendance.findByStudentIdOrderByAttendanceDateDesc(student.getId());
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("studentId", student.getId());
+        out.put("guardians", guardianLinks.findByStudentId(student.getId()).stream().map(link -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            var g = link.getGuardian();
+            row.put("id", g.getId());
+            row.put("fullName", g.getFullName());
+            row.put("mobile", g.getMobile());
+            row.put("email", g.getEmail() == null ? "" : g.getEmail());
+            row.put("relationship", link.getRelationship());
+            row.put("primary", link.isPrimaryGuardian());
+            row.put("occupation", g.getOccupation() == null ? "" : g.getOccupation());
+            row.put("address", g.getAddress() == null ? "" : g.getAddress());
+            return row;
+        }).toList());
         out.put("attendance", attendanceBlock(rows));
         out.put("homework", student.getSection() == null ? List.of()
                 : homework.findBySectionId(student.getSection().getId()).stream().map(this::homeworkRow).toList());
@@ -107,6 +128,10 @@ public class ProfileWorkspaceService {
         out.put("timetable", student.getSection() == null || yearId == null ? List.of()
                 : timetable.findBySectionIdAndAcademicYearId(student.getSection().getId(), yearId).stream()
                 .map(this::slotRow).toList());
+        out.put("health", campusRecords.findByModuleTypeAndStudentIdOrderByUpdatedAtDesc("HEALTH", student.getId())
+                .stream().map(this::campusRow).toList());
+        out.put("discipline", campusRecords.findByModuleTypeAndStudentIdOrderByUpdatedAtDesc("DISCIPLINE", student.getId())
+                .stream().map(this::campusRow).toList());
         out.put("activity", activity(student, rows));
         return out;
     }
@@ -149,6 +174,19 @@ public class ProfileWorkspaceService {
         return out;
     }
 
+    private Map<String, Object> campusRow(CampusRecord r) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", r.getId());
+        row.put("title", r.getTitle());
+        row.put("category", r.getCategory() == null ? "" : r.getCategory());
+        row.put("status", r.getStatus());
+        row.put("scheduledAt", r.getScheduledAt() == null ? "" : r.getScheduledAt().toString());
+        row.put("location", r.getLocation() == null ? "" : r.getLocation());
+        row.put("details", r.getDetails() == null ? "" : r.getDetails());
+        row.put("updatedAt", r.getUpdatedAt() == null ? "" : r.getUpdatedAt().toString());
+        return row;
+    }
+
     private Map<String, Object> attendanceBlock(List<StudentAttendance> rows) {
         long present = rows.stream().filter(r -> "PRESENT".equals(r.getStatus()) || "LATE".equals(r.getStatus())).count();
         long late = rows.stream().filter(r -> "LATE".equals(r.getStatus())).count();
@@ -164,7 +202,7 @@ public class ProfileWorkspaceService {
         block.put("absent", absent);
         block.put("leave", leave);
         block.put("total", total);
-        block.put("records", rows.stream().limit(20).map(r -> {
+        block.put("records", rows.stream().limit(60).map(r -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("date", r.getAttendanceDate().toString());
             row.put("status", r.getStatus());
@@ -185,6 +223,7 @@ public class ProfileWorkspaceService {
         row.put("className", h.getSchoolClass().getName());
         row.put("sectionName", h.getSection().getName());
         row.put("status", h.getDueDate() != null && h.getDueDate().isBefore(LocalDate.now()) ? "OVERDUE" : "OPEN");
+        row.put("attachmentFileId", h.getAttachmentFileId() == null ? "" : h.getAttachmentFileId().toString());
         return row;
     }
 

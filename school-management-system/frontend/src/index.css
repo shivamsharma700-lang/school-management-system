@@ -1,9 +1,29 @@
+@import "./site/theme.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: light;
+  --school-ink: #111114;
+  --school-forest: #15151A;
+  --school-gilt: #9A6205;
+  --school-ivory: #FAF9F7;
+  --school-line: #E3E0DA;
+  /* Fluid type — balanced, not zoomed on Android */
+  --type-hero: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  --type-section: clamp(1.5rem, 1.15rem + 1.4vw, 2.25rem);
+  --type-card: clamp(1.15rem, 1rem + 0.6vw, 1.5rem);
+  --type-module: clamp(1.35rem, 1.1rem + 1vw, 1.85rem);
+  --type-body: clamp(0.875rem, 0.82rem + 0.2vw, 0.9375rem);
+  --space-section-y: clamp(3rem, 2.2rem + 3vw, 5.5rem);
+  --hero-min-h: clamp(22rem, 52svh, 32rem);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -16,9 +36,22 @@ body,
 
 body {
   margin: 0;
-  background: #eef3f0;
-  color: #0f172a;
+  background: var(--school-ivory);
+  color: var(--school-ink);
+  font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
   font-feature-settings: "ss01" on, "cv11" on;
+  font-size: var(--type-body);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  letter-spacing: -0.025em;
+  font-weight: 500;
+  line-height: 1.15;
 }
 
 button,
@@ -29,7 +62,7 @@ textarea {
 }
 
 *:focus-visible {
-  outline: 2px solid #14663a;
+  outline: 3px solid #56565F;
   outline-offset: 2px;
 }
 
@@ -38,9 +71,9 @@ textarea {
   max-height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(900px 320px at 8% -8%, rgba(197, 160, 89, 0.14), transparent 55%),
-    radial-gradient(700px 280px at 100% 0%, rgba(12, 107, 69, 0.06), transparent 50%),
-    linear-gradient(180deg, #f6f3ec 0%, #eef3f0 100%);
+    radial-gradient(900px 280px at 0% -10%, rgba(240, 165, 0, 0.07), transparent 55%),
+    radial-gradient(700px 240px at 100% 0%, rgba(17, 17, 20, 0.05), transparent 50%),
+    #FAF9F7;
 }
 
 .sidebar-scroll,
@@ -50,8 +83,7 @@ textarea {
 }
 
 .sidebar-scroll {
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   touch-action: pan-y;
 }
 
@@ -61,16 +93,16 @@ textarea {
 }
 
 .sidebar-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
 }
 
 .main-scroll {
-  scrollbar-color: #c5cdd8 transparent;
+  scrollbar-color: #CFCAC1 transparent;
 }
 
 .main-scroll::-webkit-scrollbar {
@@ -78,24 +110,8 @@ textarea {
 }
 
 .main-scroll::-webkit-scrollbar-thumb {
-  background: #c5cdd8;
+  background: #CFCAC1;
   border-radius: 999px;
-}
-
-.depth-float {
-  transform: perspective(900px) rotateX(8deg) rotateY(-12deg);
-}
-
-.glass-panel {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.52));
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 18px 50px rgba(5, 51, 33, 0.18);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-}
-
-.icon-3d {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 14px rgba(6, 37, 31, 0.18);
 }
 
 .nav-glyph {
@@ -109,34 +125,137 @@ textarea {
 .glyph-tile {
   display: grid;
   place-items: center;
-  height: 3.35rem;
-  width: 3.35rem;
-  border-radius: 1.05rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 0.75rem;
   background: transparent;
   box-shadow: none;
-  outline: none;
 }
 
 .glyph-tile--hero {
-  height: 3.75rem;
-  width: 3.75rem;
-  border-radius: 1.15rem;
-  background: transparent;
-  box-shadow: none;
+  height: 2.75rem;
+  width: 2.75rem;
 }
 
 .glyph-tile--nav {
-  height: 2.5rem;
-  width: 2.5rem;
-  border-radius: 0.85rem;
-  background: transparent;
-  outline: none;
-  box-shadow: none;
+  height: 2rem;
+  width: 2rem;
+}
+
+.type-hero {
+  font-size: var(--type-hero);
+  line-height: 1.1;
+}
+
+.type-section {
+  font-size: var(--type-section);
+  line-height: 1.15;
+}
+
+.type-module {
+  font-size: var(--type-module);
+  line-height: 1.15;
+}
+
+.type-card {
+  font-size: var(--type-card);
+  line-height: 1.2;
+}
+
+.media-frame-hero {
+  aspect-ratio: 21 / 9;
+  max-height: min(42vh, 28rem);
+}
+
+.media-frame-banner {
+  aspect-ratio: 16 / 9;
+  max-height: 18rem;
+}
+
+.media-frame-section {
+  aspect-ratio: 4 / 3;
+  max-height: 20rem;
+}
+
+.media-frame-card {
+  aspect-ratio: 16 / 10;
+  max-height: 16rem;
+}
+
+.media-frame-thumb {
+  aspect-ratio: 16 / 10;
+  max-height: 6.5rem;
+}
+
+.media-frame-portrait {
+  aspect-ratio: 3 / 4;
+  max-height: 22rem;
+}
+
+.media-frame-profile {
+  aspect-ratio: 1 / 1;
+  max-width: 10rem;
+}
+
+.media-frame-logo {
+  aspect-ratio: auto;
+  max-height: 2.75rem;
+  width: auto;
+  object-fit: contain;
+}
+
+.media-frame-video {
+  aspect-ratio: 16 / 9;
+  max-height: min(50vh, 28rem);
+}
+
+.media-frame-event {
+  aspect-ratio: 16 / 10;
+  max-height: 14rem;
+}
+
+.media-frame-gallery {
+  aspect-ratio: 4 / 3;
+  max-height: 18rem;
+}
+
+.media-frame-detail {
+  aspect-ratio: 16 / 9;
+  max-height: min(48vh, 24rem);
+}
+
+/**
+ * Dashboard welcome band.
+ * The declared 21/9 was being overridden by `max-height: 12rem`, so at ~1100px
+ * wide the frame collapsed to roughly 6.35:1 and discarded ~72% of a 16:9
+ * source. The ratio now governs the frame and is allowed to resolve, so the
+ * crop is intentional rather than an accident of the height clamp.
+ */
+.media-frame-dashboard {
+  aspect-ratio: 40 / 9;
+  min-height: 13rem;
+}
+
+@media (max-width: 640px) {
+  .media-frame-hero {
+    aspect-ratio: 4 / 5;
+    max-height: min(52svh, 24rem);
+  }
+  .media-frame-banner,
+  .media-frame-section {
+    max-height: 12rem;
+  }
+  .media-frame-dashboard {
+    /* Portrait phones: a near-square band keeps faces and the building intact
+       instead of shaving a panoramic strip out of the middle. */
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+  }
 }
 
 .glyph-tile--active {
-  transform: scale(1.08);
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+  transform: scale(1.06);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.32));
 }
 
 .module-hero {
@@ -147,14 +266,19 @@ textarea {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(8, 8, 10, 0.10);
+}
+
 .portal-table thead {
-  background: linear-gradient(180deg, #f7faf8 0%, #eef4f0 100%);
+  background: linear-gradient(180deg, #FAF9F7 0%, #F1EFEB 100%);
 }
 
 .portal-table thead th {
-  border-bottom: 1px solid rgba(5, 51, 33, 0.08);
-  font-family: "Manrope", sans-serif;
-  letter-spacing: 0.14em;
+  border-bottom: 1px solid rgba(12, 27, 36, 0.08);
+  font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
+  letter-spacing: 0.12em;
 }
 
 .portal-table tbody tr {
@@ -162,20 +286,20 @@ textarea {
 }
 
 .portal-table tbody tr:nth-child(even) {
-  background: rgba(244, 248, 246, 0.55);
+  background: rgba(250, 249, 247, 0.7);
 }
 
 .portal-table tbody tr:hover {
-  background: #eef6f1;
+  background: #F4F4F5;
 }
 
 .portal-table tbody td {
-  border-bottom: 1px solid rgba(5, 51, 33, 0.05);
+  border-bottom: 1px solid rgba(12, 27, 36, 0.05);
   padding-top: 0.95rem;
   padding-bottom: 0.95rem;
-  font-family: "Manrope", sans-serif;
+  font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
   font-weight: 500;
-  color: #1e293b;
+  color: #2B2B32;
 }
 
 .portal-table tbody tr:last-child td {
@@ -184,27 +308,35 @@ textarea {
 
 .portal-chart .recharts-cartesian-grid-horizontal line,
 .portal-chart .recharts-cartesian-grid-vertical line {
-  stroke: rgba(5, 51, 33, 0.08);
+  stroke: rgba(12, 27, 36, 0.07);
 }
 
 .portal-chart .recharts-tooltip-wrapper .recharts-default-tooltip {
-  border: 1px solid rgba(5, 51, 33, 0.1) !important;
+  border: 1px solid rgba(12, 27, 36, 0.08) !important;
   border-radius: 14px !important;
-  box-shadow: 0 12px 28px rgba(4, 24, 15, 0.12) !important;
-  font-family: "Manrope", sans-serif !important;
+  box-shadow: 0 12px 28px rgba(7, 19, 26, 0.1) !important;
+  font-family: "Plus Jakarta Sans", "Manrope", sans-serif !important;
 }
 
 .portal-notify {
-  border-radius: 18px;
-  border: 1px solid rgba(197, 160, 89, 0.35);
-  background: linear-gradient(90deg, #fff8e8, #fffdf8);
+  border-radius: 16px;
+  border: 1px solid rgba(240, 165, 0, 0.3);
+  background: linear-gradient(90deg, #FFF6E2, #FFFFFF);
 }
 
 .portal-surface {
   background:
-    radial-gradient(1100px 400px at 8% -8%, rgba(18, 136, 90, 0.06), transparent 55%),
-    radial-gradient(900px 360px at 96% 0%, rgba(197, 160, 89, 0.06), transparent 50%),
-    linear-gradient(180deg, #f7f8f6 0%, #f0f2f0 100%);
+    radial-gradient(1100px 400px at 8% -8%, rgba(17, 17, 20, 0.04), transparent 55%),
+    radial-gradient(900px 360px at 96% 0%, rgba(240, 165, 0, 0.045), transparent 50%),
+    #FAF9F7;
+}
+
+.stat-kicker {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
 }
 
 .fade-up {
@@ -212,18 +344,33 @@ textarea {
 }
 
 .fade-up-delay {
-  animation: fade-up 0.8s 0.12s ease both;
+  animation: fade-up 0.7s ease 0.12s both;
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.cinema-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: overlay;
+}
+
+.premium-icon {
+  filter: none;
+}
+
+.stat-card:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .hero-video {
@@ -232,18 +379,6 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.stat-kicker {
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: "Manrope", sans-serif;
-}
-
-.cream-panel {
-  background: #f6f3ec;
 }
 
 .public-page {
@@ -266,16 +401,137 @@ textarea {
   transform: scale(1.04);
 }
 
-.img-zoom {
-  isolation: isolate;
-}
-
 .scrollbar-thin::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #CFCAC1;
   border-radius: 999px;
+}
+
+/* Phase 15 — responsive portal polish */
+@media (max-width: 768px) {
+  .portal-main,
+  .app-main,
+  main {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .portal-table-wrap,
+  .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .module-hero {
+    max-height: none;
+  }
+
+  .module-hero .media-frame-banner,
+  .module-hero [class*="aspect-"] {
+    display: none !important;
+  }
+
+  .PageHeader,
+  [data-page-header] {
+    gap: 0.75rem;
+  }
+
+  .font-display.text-2xl,
+  .font-display.text-3xl {
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .portal-tabs {
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 640px) {
+  .min-h-\[440px\] {
+    min-height: 260px !important;
+  }
+
+  .app-shell .font-display.text-4xl,
+  .app-shell .font-display.text-5xl {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .app-shell .portal-chart,
+  .app-shell .h-80 {
+    height: 14rem !important;
+  }
+
+  .app-shell [role="dialog"],
+  .app-shell .modal-panel {
+    max-width: calc(100vw - 1.5rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    overflow: auto !important;
+  }
+
+  .app-shell table td,
+  .app-shell table th {
+    white-space: nowrap;
+  }
+
+  .media-frame-dashboard {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+  }
+
+  .app-shell,
+  .portal-main {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .stat-card {
+    min-width: 0;
+  }
+}
+
+
+/**
+ * FAIL-VISIBLE REVEAL CONTRACT
+ * `[data-reveal]` content is visible by default and is only ever hidden by GSAP
+ * at runtime (see hooks/useGsapReveal.ts). If JS fails to load, the hook bails,
+ * or a ScrollTrigger never fires, the section still renders. A previous build
+ * left 30 homepage elements permanently `visibility:hidden`.
+ */
+[data-reveal] {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+  .fade-up,
+  .fade-up-delay {
+    animation: none !important;
+  }
+}
+
+/* Hero depth panels: a slow, offset drift so the stack feels alive without
+   drawing attention away from the headline. */
+@keyframes hero-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -12px; }
+}
+
+.hero-float {
+  animation: hero-float 8s ease-in-out infinite;
+  animation-delay: var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float { animation: none; }
 }

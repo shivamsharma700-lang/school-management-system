@@ -39,12 +39,70 @@ function useDebounced<T>(value: T, ms = 300) {
   return v;
 }
 
+function StudentDocumentsTab({ studentId, admissionNumber, studentCode }: { studentId: string; admissionNumber: string; studentCode: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const docs = useQuery({
+    queryKey: ["student-documents", studentId],
+    queryFn: () => api<{ id: string; title: string; docType: string; fileId: string; originalName: string }[]>(`/api/students/${studentId}/documents`),
+  });
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const body = new FormData();
+      body.append("file", file);
+      const stored = await api<{ id: string }>("/api/files", { method: "POST", body });
+      return post(`/api/students/${studentId}/documents`, {
+        fileId: stored.id,
+        docType: "GENERAL",
+        title: file.name,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Document uploaded");
+      void qc.invalidateQueries({ queryKey: ["student-documents", studentId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <div className="grid gap-4">
+      <TableShell columns={["Document", "Reference", "Source"]}>
+        <tr><td className="px-4 py-3">Admission number</td><td className="px-4 py-3">{admissionNumber}</td><td className="px-4 py-3">Student record</td></tr>
+        <tr><td className="px-4 py-3">Student code</td><td className="px-4 py-3">{studentCode}</td><td className="px-4 py-3">Student record</td></tr>
+        {(docs.data ?? []).map((d) => (
+          <tr key={d.id}>
+            <td className="px-4 py-3">{d.title}</td>
+            <td className="px-4 py-3">{d.docType}</td>
+            <td className="px-4 py-3">
+              <a className="font-semibold text-forest-700" href={`/api/files/${d.fileId}`} target="_blank" rel="noreferrer">{d.originalName || "Open"}</a>
+            </td>
+          </tr>
+        ))}
+      </TableShell>
+      {docs.isError ? <ErrorState message="Could not load documents." onRetry={() => docs.refetch()} /> : null}
+      {isAdminLike(user?.role) ? (
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-forest-700">
+          <input
+            type="file"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) upload.mutate(f);
+            }}
+          />
+          {upload.isPending ? "Uploading…" : "Upload document"}
+        </label>
+      ) : null}
+    </div>
+  );
+}
+
 export function StudentsPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [q, setQ] = useState("");
-  const [branchId, setBranchId] = useState(() => sessionStorage.getItem("dps_branch_ui") || params.get("branchId") || "");
+  const [branchId, setBranchId] = useState(() => sessionStorage.getItem("twhps_branch_ui") || params.get("branchId") || "");
   const [classId, setClassId] = useState(params.get("classId") || "");
   const [sectionId, setSectionId] = useState(params.get("sectionId") || "");
   const [status, setStatus] = useState("");
@@ -56,13 +114,20 @@ export function StudentsPage() {
   const dq = useDebounced(q);
 
   useEffect(() => {
+    if (params.get("action") === "new" && isAdminLike(user?.role)) {
+      setOpen(true);
+      navigate("/app/students", { replace: true });
+    }
+  }, [params, user?.role, navigate]);
+
+  useEffect(() => {
     const onBranch = (e: Event) => {
       const id = (e as CustomEvent<string>).detail ?? "";
       setBranchId(id);
       setPage(0);
     };
-    window.addEventListener("dps-branch", onBranch as EventListener);
-    return () => window.removeEventListener("dps-branch", onBranch as EventListener);
+    window.addEventListener("school-branch", onBranch as EventListener);
+    return () => window.removeEventListener("school-branch", onBranch as EventListener);
   }, []);
 
   useEffect(() => {
@@ -89,9 +154,9 @@ export function StudentsPage() {
     queryKey: ["students-summary", query],
     queryFn: () => api<StudentSummary>(`/api/students/summary?${query.replace(/page=\d+&size=\d+&?/, "")}`),
   });
-  const liveOk = studentsQ.isSuccess;
-  const students = liveOk ? studentsQ.data : (DEMO_MODE && studentsQ.isError ? demoStudentPage : studentsQ.data);
-  const isDemo = !liveOk && DEMO_MODE && studentsQ.isError;
+  const studentsLive = useLiveOrDemo(studentsQ, demoStudentPage);
+  const students = studentsLive.data;
+  const isDemo = studentsLive.isDemo;
   const classes = useQuery({
     queryKey: ["classes", branchId],
     queryFn: () => api<SchoolClass[]>(`/api/classes${branchId ? `?branchId=${branchId}` : ""}`),
@@ -120,8 +185,36 @@ export function StudentsPage() {
         subtitle="Manage and view student information across all 8 branches."
         action={
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={() => toast.message("Bulk CSV import is not wired. Use Add Student to create a live record.")}>
-              Import
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".csv,text/csv";
+                input.onchange = async () => {
+                  const file = input.files?.[0];
+                  if (!file) return;
+                  try {
+                    const csv = await file.text();
+                    const res = await post<{ created: number; skipped: number; errors: string[]; transactionMode?: string; note?: string }>("/api/bulk/students", {
+                      csv,
+                      branchId: user?.branchId || branchId || undefined,
+                      academicYearId: yearId || undefined,
+                    });
+                    toast.success(`Created ${res.created} · Skipped ${res.skipped} · Errors ${res.errors?.length ?? 0}`);
+                    if (res.note) toast.message(res.note);
+                    if (res.errors?.length) toast.message(res.errors.slice(0, 3).join(" · "));
+                    void qc.invalidateQueries({ queryKey: ["students"] });
+                    void qc.invalidateQueries({ queryKey: ["students-summary"] });
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Import failed");
+                  }
+                };
+                input.click();
+              }}
+            >
+              Import CSV
             </Button>
             <Button
               variant="secondary"
@@ -190,7 +283,7 @@ export function StudentsPage() {
         </Select>
         <Input placeholder="Search name, admission, father, phone" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
-      {studentsQ.isLoading ? <Skeleton className="h-72" /> : studentsQ.isError && !isDemo ? (
+      {studentsQ.isLoading ? <Skeleton className="h-72" /> : studentsLive.isError ? (
         <ErrorState message="Could not load students." onRetry={() => studentsQ.refetch()} />
       ) : rows.length === 0 ? (
         <EmptyState title="No students found" body="Try another search, or add a student if you have permission." />
@@ -346,6 +439,7 @@ function StudentForm({ open, onClose, existing }: { open: boolean; onClose: () =
 export function StudentProfilePage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [tab, setTab] = useState("overview");
   const [edit, setEdit] = useState(false);
   const isDemoId = Boolean(id?.startsWith("demo-"));
@@ -359,9 +453,37 @@ export function StudentProfilePage() {
     enabled: Boolean(id) && !isDemoId,
     queryFn: () => api<StudentWorkspace>(`/api/students/${id}/workspace`),
   });
+  const setStatus = useMutation({
+    mutationFn: (status: string) => {
+      const s = student.data!;
+      return put(`/api/students/${s.id}`, {
+        fullName: s.fullName,
+        admissionNumber: s.admissionNumber,
+        studentCode: s.studentCode,
+        gender: s.gender,
+        dateOfBirth: s.dateOfBirth,
+        admissionDate: s.admissionDate,
+        academicYearId: s.academicYearId,
+        classId: s.classId,
+        sectionId: s.sectionId,
+        branchId: s.branchId,
+        mobile: s.mobile,
+        email: s.email,
+        address: s.address,
+        status,
+      });
+    },
+    onSuccess: (_, status) => {
+      toast.success(status === "ACTIVE" ? "Student reactivated" : "Student marked inactive");
+      void qc.invalidateQueries({ queryKey: ["student", id] });
+      void qc.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const s = isDemoId && DEMO_MODE ? demoStudents.find((row) => row.id === id) : student.data;
   const pack = workspace.data;
   if (!isDemoId && student.isLoading) return <Skeleton className="h-80" />;
+  if (!isDemoId && student.isError) return <ErrorState message="Could not load student." onRetry={() => student.refetch()} />;
   if (!s) return <EmptyState title="Student not found" body="This record is not in your authorised scope." />;
   return (
     <div>
@@ -369,7 +491,18 @@ export function StudentProfilePage() {
         crumbs={["People", "Students"]}
         title={s.fullName}
         subtitle={`${s.admissionNumber} · ${s.branchName ?? "Campus"}`}
-        action={isAdminLike(user?.role) && !isDemoId ? <Button variant="secondary" onClick={() => setEdit(true)}>Edit</Button> : null}
+        action={
+          isAdminLike(user?.role) && !isDemoId ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => setEdit(true)}>Edit</Button>
+              {s.status === "ACTIVE" ? (
+                <Button variant="secondary" disabled={setStatus.isPending} onClick={() => setStatus.mutate("INACTIVE")}>Deactivate</Button>
+              ) : (
+                <Button variant="secondary" disabled={setStatus.isPending} onClick={() => setStatus.mutate("ACTIVE")}>Reactivate</Button>
+              )}
+            </div>
+          ) : null
+        }
       />
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <Card><p className="text-xs text-slate-500">Class</p><p className="mt-1 font-semibold">{s.className ?? "—"} / {s.sectionName ?? "—"}</p></Card>
@@ -386,9 +519,11 @@ export function StudentProfilePage() {
           { id: "parents", label: "Parents" },
           { id: "attendance", label: "Attendance" },
           { id: "homework", label: "Homework" },
+          { id: "assignments", label: "Assignments" },
           { id: "exams", label: "Exams" },
           { id: "results", label: "Results" },
           { id: "fees", label: "Fees" },
+          { id: "payments", label: "Payments" },
           { id: "transport", label: "Transport" },
           { id: "library", label: "Library" },
           { id: "health", label: "Health" },
@@ -399,27 +534,43 @@ export function StudentProfilePage() {
       />
       <div className="mt-5">
         {tab === "overview" ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <p className="mb-3 font-semibold">Personal</p>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <div><dt className="text-slate-500">Father</dt><dd>{s.fatherName || "—"}</dd></div>
+                  <div><dt className="text-slate-500">Mother</dt><dd>{s.motherName || "—"}</dd></div>
+                  <div><dt className="text-slate-500">Blood group</dt><dd>{s.bloodGroup || "—"}</dd></div>
+                  <div><dt className="text-slate-500">Gender</dt><dd>{s.gender}</dd></div>
+                  <div><dt className="text-slate-500">Date of birth</dt><dd>{formatDate(s.dateOfBirth)}</dd></div>
+                  <div><dt className="text-slate-500">Mobile</dt><dd>{s.mobile || "—"}</dd></div>
+                  <div><dt className="text-slate-500">Email</dt><dd>{s.email || "—"}</dd></div>
+                  <div className="col-span-2"><dt className="text-slate-500">Address</dt><dd>{s.address || "—"}</dd></div>
+                </dl>
+              </Card>
+              <Card>
+                <p className="mb-3 font-semibold">Academic</p>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <div><dt className="text-slate-500">Student code</dt><dd>{s.studentCode}</dd></div>
+                  <div><dt className="text-slate-500">Admitted</dt><dd>{formatDate(s.admissionDate)}</dd></div>
+                  <div><dt className="text-slate-500">Class</dt><dd>{s.className ?? "—"}</dd></div>
+                  <div><dt className="text-slate-500">Section</dt><dd>{s.sectionName ?? "—"}</dd></div>
+                  <div><dt className="text-slate-500">Roll</dt><dd>{s.rollNumber || "—"}</dd></div>
+                  <div><dt className="text-slate-500">Branch</dt><dd>{s.branchName || "—"}</dd></div>
+                </dl>
+              </Card>
+            </div>
             <Card>
-              <p className="mb-3 font-semibold">Personal</p>
-              <dl className="grid grid-cols-2 gap-3 text-sm">
-                <div><dt className="text-slate-500">Father</dt><dd>{s.fatherName || "—"}</dd></div>
-                <div><dt className="text-slate-500">Mother</dt><dd>{s.motherName || "—"}</dd></div>
-                <div><dt className="text-slate-500">Blood group</dt><dd>{s.bloodGroup || "—"}</dd></div>
-                <div><dt className="text-slate-500">Gender</dt><dd>{s.gender}</dd></div>
-                <div><dt className="text-slate-500">Date of birth</dt><dd>{formatDate(s.dateOfBirth)}</dd></div>
-                <div><dt className="text-slate-500">Mobile</dt><dd>{s.mobile || "—"}</dd></div>
-                <div><dt className="text-slate-500">Email</dt><dd>{s.email || "—"}</dd></div>
-                <div className="col-span-2"><dt className="text-slate-500">Address</dt><dd>{s.address || "—"}</dd></div>
-              </dl>
-            </Card>
-            <Card>
-              <p className="mb-3 font-semibold">Academic</p>
-              <dl className="grid grid-cols-2 gap-3 text-sm">
-                <div><dt className="text-slate-500">Student code</dt><dd>{s.studentCode}</dd></div>
-                <div><dt className="text-slate-500">Admitted</dt><dd>{formatDate(s.admissionDate)}</dd></div>
-                <div><dt className="text-slate-500">Class</dt><dd>{s.className ?? "—"}</dd></div>
-                <div><dt className="text-slate-500">Section</dt><dd>{s.sectionName ?? "—"}</dd></div>
+              <p className="mb-3 font-semibold">Complete API record</p>
+              <p className="mb-3 text-xs text-slate-500">Every field returned by GET /api/students/{"{id}"}.</p>
+              <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(s as unknown as Record<string, unknown>).map(([k, v]) => (
+                  <div key={k} className="border-b border-ink-900/6 pb-2 text-sm">
+                    <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{k}</dt>
+                    <dd className="mt-0.5 font-medium text-ink-900">{v == null || v === "" ? "—" : String(v)}</dd>
+                  </div>
+                ))}
               </dl>
             </Card>
           </div>
@@ -446,12 +597,24 @@ export function StudentProfilePage() {
           </div>
         ) : null}
         {tab === "parents" ? (
-          <Card>
-            <p className="font-semibold">{s.fatherName || "Primary guardian"}</p>
-            <p className="text-sm text-slate-500">Father · {s.emergencyContact || s.mobile || "—"}</p>
-            <p className="mt-2 text-sm text-slate-500">Mother · {s.motherName || "—"}</p>
-            <p className="mt-2 text-xs text-slate-400">Linked from the student record stored in PostgreSQL.</p>
-          </Card>
+          (pack?.guardians ?? []).length === 0 ? (
+            <EmptyState title="No linked guardians" body="Link a guardian via Guardians → student relationship. Father/mother name fields on the profile are legacy labels only." />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {pack!.guardians!.map((g) => (
+                <Card key={g.id}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold">{g.fullName}</p>
+                    {g.primary ? <Badge>Primary</Badge> : null}
+                  </div>
+                  <p className="mt-1 text-sm text-slate-500">{g.relationship || "Guardian"} · {g.mobile || "—"}</p>
+                  <p className="text-sm text-slate-500">{g.email || "—"}</p>
+                  {g.occupation ? <p className="mt-2 text-xs text-slate-400">{g.occupation}</p> : null}
+                  {g.address ? <p className="text-xs text-slate-400">{g.address}</p> : null}
+                </Card>
+              ))}
+            </div>
+          )
         ) : null}
         {tab === "attendance" ? (
           <div className="grid gap-4">
@@ -486,6 +649,27 @@ export function StudentProfilePage() {
                   <td className="px-4 py-3">{h.teacher}</td>
                   <td className="px-4 py-3">{formatDate(h.dueDate)}</td>
                   <td className="px-4 py-3"><Badge tone={statusTone(h.status)}>{h.status}</Badge></td>
+                </tr>
+              ))}
+            </TableShell>
+          )
+        ) : null}
+        {tab === "assignments" ? (
+          (pack?.homework ?? []).length === 0 ? (
+            <EmptyState title="No assignments" body="v1 assignments use the homework module. Published homework for this section appears here." />
+          ) : (
+            <TableShell columns={["Assignment", "Subject", "Teacher", "Due", "Attachment"]}>
+              {pack!.homework.map((h) => (
+                <tr key={`asg-${h.id}`}>
+                  <td className="px-4 py-3 font-medium">{h.title}</td>
+                  <td className="px-4 py-3">{h.subject}</td>
+                  <td className="px-4 py-3">{h.teacher}</td>
+                  <td className="px-4 py-3">{formatDate(h.dueDate)}</td>
+                  <td className="px-4 py-3">
+                    {(h as { attachmentFileId?: string }).attachmentFileId ? (
+                      <a className="font-semibold text-forest-700" href={`/api/files/${(h as { attachmentFileId?: string }).attachmentFileId}`} target="_blank" rel="noreferrer">Open</a>
+                    ) : "—"}
+                  </td>
                 </tr>
               ))}
             </TableShell>
@@ -536,6 +720,22 @@ export function StudentProfilePage() {
             </TableShell>
           )
         ) : null}
+        {tab === "payments" ? (
+          (pack?.invoices ?? []).filter((inv) => Number(inv.paidAmount) > 0).length === 0 ? (
+            <EmptyState title="No payments recorded" body="Paid amounts on invoices appear here. Full payment ledger is under Finance → Payments." />
+          ) : (
+            <TableShell columns={["Invoice", "Paid", "Outstanding", "Status"]}>
+              {pack!.invoices.filter((inv) => Number(inv.paidAmount) > 0).map((inv) => (
+                <tr key={`pay-${inv.id}`}>
+                  <td className="px-4 py-3 font-medium">{inv.invoiceNumber}</td>
+                  <td className="px-4 py-3">{formatMoney(inv.paidAmount)}</td>
+                  <td className="px-4 py-3">{formatMoney(Number(inv.totalAmount) - Number(inv.paidAmount))}</td>
+                  <td className="px-4 py-3"><Badge tone={statusTone(inv.status)}>{inv.status}</Badge></td>
+                </tr>
+              ))}
+            </TableShell>
+          )
+        ) : null}
         {tab === "transport" ? (
           (pack?.transport ?? []).length === 0 ? <EmptyState title="No transport assignment" body="This student is not assigned to a bus route in PostgreSQL." /> : (
             <div className="grid gap-3 md:grid-cols-2">
@@ -565,26 +765,49 @@ export function StudentProfilePage() {
           )
         ) : null}
         {tab === "health" ? (
-          <Card>
-            <dl className="grid gap-3 sm:grid-cols-2 text-sm">
-              <div><dt className="text-slate-500">Blood group</dt><dd>{s.bloodGroup || "Not recorded"}</dd></div>
-              <div><dt className="text-slate-500">Emergency contact</dt><dd>{s.emergencyContact || s.mobile || "—"}</dd></div>
-            </dl>
-            <p className="mt-4 text-sm text-slate-500">No clinic visit rows are stored for this student. The health register stays empty until a visit is recorded.</p>
-          </Card>
+          <div className="grid gap-4">
+            <Card>
+              <dl className="grid gap-3 sm:grid-cols-2 text-sm">
+                <div><dt className="text-slate-500">Blood group</dt><dd>{s.bloodGroup || "Not recorded"}</dd></div>
+                <div><dt className="text-slate-500">Emergency contact</dt><dd>{s.emergencyContact || s.mobile || "—"}</dd></div>
+              </dl>
+            </Card>
+            {(pack?.health ?? []).length === 0 ? (
+              <EmptyState title="No clinic visits" body="Health visits recorded under campus records (HEALTH) for this student appear here." />
+            ) : (
+              <TableShell columns={["Visit", "Category", "Status", "When", "Details"]}>
+                {pack!.health!.map((h) => (
+                  <tr key={h.id}>
+                    <td className="px-4 py-3 font-medium">{h.title}</td>
+                    <td className="px-4 py-3">{h.category || "—"}</td>
+                    <td className="px-4 py-3"><Badge tone={statusTone(h.status)}>{h.status}</Badge></td>
+                    <td className="px-4 py-3">{formatDate(h.scheduledAt || h.updatedAt)}</td>
+                    <td className="px-4 py-3">{h.details || "—"}</td>
+                  </tr>
+                ))}
+              </TableShell>
+            )}
+          </div>
         ) : null}
         {tab === "discipline" ? (
-          <Card>
-            <p className="font-semibold">Conduct standing</p>
-            <p className="mt-2 text-sm text-slate-500">No discipline cases are stored for {s.fullName}. Standing is clear on the current record.</p>
-          </Card>
+          (pack?.discipline ?? []).length === 0 ? (
+            <EmptyState title="No discipline cases" body="Behaviour records stored as campus records (DISCIPLINE) for this student appear here." />
+          ) : (
+            <TableShell columns={["Incident", "Category", "Status", "When", "Details"]}>
+              {pack!.discipline!.map((d) => (
+                <tr key={d.id}>
+                  <td className="px-4 py-3 font-medium">{d.title}</td>
+                  <td className="px-4 py-3">{d.category || "—"}</td>
+                  <td className="px-4 py-3"><Badge tone={statusTone(d.status)}>{d.status}</Badge></td>
+                  <td className="px-4 py-3">{formatDate(d.scheduledAt || d.updatedAt)}</td>
+                  <td className="px-4 py-3">{d.details || "—"}</td>
+                </tr>
+              ))}
+            </TableShell>
+          )
         ) : null}
         {tab === "documents" ? (
-          <TableShell columns={["Document", "Reference", "Source"]}>
-            <tr><td className="px-4 py-3">Admission number</td><td className="px-4 py-3">{s.admissionNumber}</td><td className="px-4 py-3">Student record</td></tr>
-            <tr><td className="px-4 py-3">Student code</td><td className="px-4 py-3">{s.studentCode}</td><td className="px-4 py-3">Student record</td></tr>
-            <tr><td className="px-4 py-3">Uploaded files</td><td className="px-4 py-3">None</td><td className="px-4 py-3">No document API rows</td></tr>
-          </TableShell>
+          <StudentDocumentsTab studentId={s.id} admissionNumber={s.admissionNumber ?? ""} studentCode={s.studentCode ?? ""} />
         ) : null}
         {tab === "activity" ? (
           (pack?.activity ?? []).length === 0 ? <EmptyState title="No activity" body="Attendance and invoice events will appear as they are stored." /> : (
@@ -701,7 +924,7 @@ export function UsersPage() {
                   <div className="flex items-center gap-3">
                     <Avatar name={u.fullName} size="sm" />
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-[#053321]">{u.fullName}</p>
+                      <p className="truncate font-semibold text-[#111114]">{u.fullName}</p>
                       <p className="truncate text-xs font-medium text-slate-500">{u.email}</p>
                     </div>
                   </div>
@@ -784,7 +1007,7 @@ export function StaffPage() {
   }
   return (
     <div>
-      <PageHeader crumbs={["People"]} title="Teachers & staff" subtitle="Staff records returned by the API. Create/update staff endpoints are not available yet." action={<Input className="w-64" placeholder="Search staff" value={q} onChange={(e) => setQ(e.target.value)} />} />
+      <PageHeader crumbs={["People"]} title="Teachers & staff" subtitle="Teaching and non-teaching staff across the campus." action={<Input className="w-64" placeholder="Search staff" value={q} onChange={(e) => setQ(e.target.value)} />} />
       {staff.isDemo ? <div className="mb-3"><DemoChip show /></div> : null}
       {staff.isLoading ? <Skeleton className="h-72" /> : rows.length === 0 ? (
         <EmptyState title="No staff in scope" body="Staff will appear here once records exist for your branch." />
@@ -1011,16 +1234,39 @@ export function TeacherProfilePage() {
 }
 
 export function GuardiansPage() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ fullName: "", mobile: "", email: "", address: "", occupation: "" });
   const queryQ = useQuery({
     queryKey: ["guardians", q],
     queryFn: () => api<PageResponse<GuardianRow>>(`/api/guardians?q=${encodeURIComponent(q)}&size=25`),
   });
   const query = useLiveOrDemo(queryQ, { items: demoGuardians, total: demoGuardians.length, page: 0, size: 25 });
+  const create = useMutation({
+    mutationFn: () => post("/api/guardians", form),
+    onSuccess: () => {
+      toast.success("Guardian created");
+      setOpen(false);
+      void qc.invalidateQueries({ queryKey: ["guardians"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const rows = query.data?.items ?? [];
   return (
     <div>
-      <PageHeader crumbs={["People"]} title="Guardians" subtitle="Linked family contacts. Guardian create is only available while adding a student." action={<Input className="w-64" placeholder="Search guardians" value={q} onChange={(e) => setQ(e.target.value)} />} />
+      <PageHeader
+        crumbs={["People"]}
+        title="Guardians"
+        subtitle="Parents and guardians linked to enrolled students."
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Input className="w-64" placeholder="Search guardians" value={q} onChange={(e) => setQ(e.target.value)} />
+            {isAdminLike(user?.role) ? <Button onClick={() => setOpen(true)}>Add guardian</Button> : null}
+          </div>
+        }
+      />
       {query.isLoading ? <Skeleton className="h-64" /> : rows.length === 0 ? (
         <EmptyState title="No guardians" body="Guardian rows appear after they are stored in the directory." />
       ) : (
@@ -1040,6 +1286,19 @@ export function GuardiansPage() {
           ))}
         </TableShell>
       )}
+      <Modal open={open} title="Add guardian" onClose={() => setOpen(false)}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Full name" required><Input value={form.fullName} onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))} /></Field>
+          <Field label="Mobile" required><Input value={form.mobile} onChange={(e) => setForm((f) => ({ ...f, mobile: e.target.value }))} /></Field>
+          <Field label="Email"><Input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></Field>
+          <Field label="Occupation"><Input value={form.occupation} onChange={(e) => setForm((f) => ({ ...f, occupation: e.target.value }))} /></Field>
+          <div className="sm:col-span-2"><Field label="Address"><Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} /></Field></div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button disabled={!form.fullName || !form.mobile || create.isPending} onClick={() => create.mutate()}>Save</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

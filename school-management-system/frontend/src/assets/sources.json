@@ -1,0 +1,746 @@
+{
+  "policy": {
+    "summary": "Every image is either Unsplash-licensed or Wikimedia Commons under a licence permitting commercial reuse. No school's own website assets are scraped or hotlinked. Commons images under CC BY-SA require the attribution recorded below to be shown on the site credits page.",
+    "rules": [
+      "No American or European university imagery",
+      "No Chinese/East-Asian classrooms presented as Indian campuses",
+      "No Western corporate stock standing in for school scenes",
+      "No concert, unrelated-vehicle or generic-building filler",
+      "No watermarked assets, no AI-generated faces or architecture",
+      "One purposeful image per section - no universal filler"
+    ],
+    "note": "Commons full-text search for 'Indian school' returns Native American boarding schools; candidates are chosen by explicit file name after visual review, never by bulk search."
+  },
+  "generated": "2026-09-15",
+  "assets": [
+    {
+      "path": "/assets/school/campus/hero.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Aerial view of a modern Indian school campus with playing fields",
+      "use": "Home hero / campus hero",
+      "aspect": 2.333,
+      "source": "Wikimedia Commons",
+      "file": "Devamatha CMI Public School Thrissur kerala.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Devamathacmipublicschool",
+      "page": "https://commons.wikimedia.org/wiki/File%3ADevamatha%20CMI%20Public%20School%20Thrissur%20kerala.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/campus/wide.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school assembly in the campus forecourt",
+      "use": "Campus wide / about",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Primary Campus.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Advaithacademy",
+      "page": "https://commons.wikimedia.org/wiki/File%3APrimary%20Campus.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/campus/entrance.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school entrance with school buses lined up at the portico",
+      "use": "Campus entrance / admissions arrival",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Arya Central School.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Vaibhav P Raj",
+      "page": "https://commons.wikimedia.org/wiki/File%3AArya%20Central%20School.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/campus/dusk.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school building among palms in evening light",
+      "use": "Campus secondary / architecture",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "MSHSS Ranni, Pathanamthitta, Kerala.jpg",
+      "licence": "CC BY-SA 3.0",
+      "author": "Ramjchandran",
+      "page": "https://commons.wikimedia.org/wiki/File%3AMSHSS%20Ranni%2C%20Pathanamthitta%2C%20Kerala.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/campus/aerial.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Aerial view of an Indian school campus with its bus fleet",
+      "use": "Campus aerial / branches",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Central-india-academy-dewas-cis-1.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Prashant Garg",
+      "page": "https://commons.wikimedia.org/wiki/File%3ACentral-india-academy-dewas-cis-1.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/dashboard/hero.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school campus with students assembled in the forecourt",
+      "use": "Dashboard welcome band (panoramic master)",
+      "aspect": 4.444,
+      "source": "Wikimedia Commons",
+      "file": "Primary Campus.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Advaithacademy",
+      "page": "https://commons.wikimedia.org/wiki/File%3APrimary%20Campus.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/dashboard/promo.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian schoolgirls in uniform in class",
+      "use": "Dashboard 'Education beyond classrooms' card (portrait)",
+      "aspect": 0.8,
+      "source": "Unsplash",
+      "photoId": "1573894998033-c0cef4ed722b",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1573894998033-c0cef4ed722b",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/students/portrait.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Portrait of an Indian schoolboy",
+      "use": "Student portrait",
+      "aspect": 0.8,
+      "source": "Unsplash",
+      "photoId": "1524069290683-0457abfe42c3",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1524069290683-0457abfe42c3",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/students/classroom.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian classroom full of students with their teacher",
+      "use": "Academics / classroom",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1709290749293-c6152a187b14",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1709290749293-c6152a187b14",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/students/group.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Group of Indian schoolgirls in uniform",
+      "use": "About / student body",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1573894998033-c0cef4ed722b",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1573894998033-c0cef4ed722b",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/students/uniform.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school students sharing lunch on the school lawn",
+      "use": "Student life / uniform",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1623863568368-69e4cbe6cc0b",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1623863568368-69e4cbe6cc0b",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/students/books.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian student holding school books",
+      "use": "Middle school / reading",
+      "aspect": 0.8,
+      "source": "Unsplash",
+      "photoId": "1623303366639-0e330d7c3d9f",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1623303366639-0e330d7c3d9f",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/student-life/campus.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian students in a busy classroom",
+      "use": "Student life",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1573894999291-f440466112cc",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1573894999291-f440466112cc",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/student-life/friends.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "School students together in class",
+      "use": "Clubs / friendships",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1509062522246-3755977927d7",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1509062522246-3755977927d7",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/teachers/faculty.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Teacher leading a lesson in an Indian classroom",
+      "use": "Faculty / teachers",
+      "aspect": 1.5,
+      "source": "Unsplash",
+      "photoId": "1709290749293-c6152a187b14",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1709290749293-c6152a187b14",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/classrooms/lesson.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian students at desks during a lesson",
+      "use": "Classroom lesson",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1719159381916-062fa9f435a6",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1719159381916-062fa9f435a6",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/classrooms/digital.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian classroom with a digital display board",
+      "use": "Smart classroom / technology",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1719159381962-4170890ada4e",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1719159381962-4170890ada4e",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/library/reading.jpg",
+      "widths": [
+        640,
+        1280
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "School library in an Indian Kendriya Vidyalaya",
+      "use": "Library",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Kv kanjikode library.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Mrahiman",
+      "page": "https://commons.wikimedia.org/wiki/File%3AKv%20kanjikode%20library.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/science-lab/bench.jpg",
+      "widths": [
+        640,
+        1280
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Students working with their teacher in an Indian science laboratory",
+      "use": "Science laboratory",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Prof Satish Chandra Garkoti with his students in his Plant Ecology Laboratory, School of Environmental Sciences, Jawaharlal Nehru University, New Delhi, India.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Ambujmishra89",
+      "page": "https://commons.wikimedia.org/wiki/File%3AProf%20Satish%20Chandra%20Garkoti%20with%20his%20students%20in%20his%20Plant%20Ecology%20Laboratory%2C%20School%20of%20Environmental%20Sciences%2C%20Jawaharlal%20Nehru%20University%2C%20New%20Delhi%2C%20India.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/computer-lab/lab.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Rows of computers in an Indian school computer laboratory",
+      "use": "Computer laboratory",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Baramati, Maharashtra, India. Computers in a lab.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Fredericknoronha",
+      "page": "https://commons.wikimedia.org/wiki/File%3ABaramati%2C%20Maharashtra%2C%20India.%20Computers%20in%20a%20lab.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/auditorium/hall.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Main block of an Indian school housing the assembly hall",
+      "use": "Auditorium / assembly hall",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Arwachin International School main building.jpg",
+      "licence": "CC0",
+      "author": "Contrapunctus-1",
+      "page": "https://commons.wikimedia.org/wiki/File%3AArwachin%20International%20School%20main%20building.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/sports/field.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "School sports ground",
+      "use": "Sports",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1593766787879-e8c78e09cbbe",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1593766787879-e8c78e09cbbe",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/sports/athletics.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Cricket ball on a school playing field",
+      "use": "Athletics / inter-house sport",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1531415074968-036ba1b575da",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1531415074968-036ba1b575da",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/sports/basketball.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Basketball court at an Indian higher secondary school",
+      "use": "Basketball",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Basketball CGHSS Tura Oct24 A7CR 03806.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Timothy A. Gonsalves",
+      "page": "https://commons.wikimedia.org/wiki/File%3ABasketball%20CGHSS%20Tura%20Oct24%20A7CR%2003806.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/sports/football.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Football match on a ground in India",
+      "use": "Football",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Football Match.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Sanjaynegi",
+      "page": "https://commons.wikimedia.org/wiki/File%3AFootball%20Match.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/events/cultural.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Chau dance performed by students at an Indian school",
+      "use": "Cultural programme / dance",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Chau Dance at Techno India Group Public School, Ariadaha.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Rahil2306",
+      "page": "https://commons.wikimedia.org/wiki/File%3AChau%20Dance%20at%20Techno%20India%20Group%20Public%20School%2C%20Ariadaha.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/parents/meeting.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "An Indian parent and her daughter",
+      "use": "Parents / family",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1780329940878-c9b6d3f32c14",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1780329940878-c9b6d3f32c14",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/events/assembly.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school morning assembly",
+      "use": "Assembly / events",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Primary Campus.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Advaithacademy",
+      "page": "https://commons.wikimedia.org/wiki/File%3APrimary%20Campus.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/events/yoga.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school students at a yoga day event",
+      "use": "Yoga day / cultural events",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1649008726820-d90aeb70c32e",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1649008726820-d90aeb70c32e",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/transport/bus.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian schoolchildren boarding a yellow school bus",
+      "use": "Transport / bus",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "SOSV school bus.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Kchava",
+      "page": "https://commons.wikimedia.org/wiki/File%3ASOSV%20school%20bus.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/transport/fleet.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Fleet of Indian yellow school buses",
+      "use": "Transport fleet / bus tracking",
+      "aspect": 2.333,
+      "source": "Wikimedia Commons",
+      "file": "Advaith Transport.jpg",
+      "licence": "CC BY-SA 4.0",
+      "author": "Advaithacademy",
+      "page": "https://commons.wikimedia.org/wiki/File%3AAdvaith%20Transport.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/admissions/desk.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Families arriving at an Indian school for admissions",
+      "use": "Admissions",
+      "aspect": 1.778,
+      "source": "Wikimedia Commons",
+      "file": "Taktse International School Main Building.jpg",
+      "licence": "CC BY-SA 3.0",
+      "author": "Supple.evan",
+      "page": "https://commons.wikimedia.org/wiki/File%3ATaktse%20International%20School%20Main%20Building.jpg",
+      "permission": "licensed_reuse_with_attribution"
+    },
+    {
+      "path": "/assets/school/achievements/boards.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Indian school student looking ahead",
+      "use": "Achievements / board results",
+      "aspect": 1.778,
+      "source": "Unsplash",
+      "photoId": "1659985281435-d8d3ea55b55c",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1659985281435-d8d3ea55b55c",
+      "permission": "licensed_free_commercial"
+    },
+    {
+      "path": "/assets/school/leadership/principal.jpg",
+      "widths": [
+        640,
+        1280,
+        1920
+      ],
+      "formats": [
+        "avif",
+        "webp",
+        "jpg"
+      ],
+      "alt": "Teacher addressing her class in an Indian school",
+      "use": "Principal / leadership (portrait crop)",
+      "aspect": 0.8,
+      "source": "Unsplash",
+      "photoId": "1709290749293-c6152a187b14",
+      "licence": "Unsplash License",
+      "page": "https://unsplash.com/photos/1709290749293-c6152a187b14",
+      "permission": "licensed_free_commercial"
+    }
+  ]
+}

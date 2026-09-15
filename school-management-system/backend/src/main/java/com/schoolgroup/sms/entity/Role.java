@@ -7,5 +7,7 @@ public enum Role {
     TEACHER,
     ACCOUNTANT,
     PARENT,
-    STUDENT
+    STUDENT,
+    /** Fleet operator: vehicles, drivers, routes, stops, trips, boarding. No academic or financial access. */
+    TRANSPORT
 }

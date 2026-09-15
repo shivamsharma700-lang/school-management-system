@@ -14,10 +14,12 @@ export type UserSummary = {
 type AuthState = {
   user: UserSummary | null;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSummary | null>(() => {
@@ -38,7 +40,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("sms_user", JSON.stringify(res.user));
         setUser(res.user);
       },
-      logout() {
+      async logout() {
+        const refreshToken = localStorage.getItem("sms_refresh_token");
+        try {
+          if (refreshToken) {
+            await fetch(`${API_BASE}/api/auth/logout`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            });
+          }
+        } catch {
+          /* still clear local session */
+        }
         localStorage.removeItem("sms_access_token");
         localStorage.removeItem("sms_refresh_token");
         localStorage.removeItem("sms_user");
